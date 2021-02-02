@@ -16,13 +16,16 @@ class Grid
     private:
         std::vector<std::vector<double>> population;
         std::vector<std::vector<double>> elevation;
+        std::vector<std::vector<double>> vegetation;
         std::vector<std::vector<int>> arrival_time;
     public:
         Grid()
         {
             population = std::vector<std::vector<double>>(NROWS, std::vector<double>(NCOLS, 0.0));
             elevation = std::vector<std::vector<double>>(NROWS, std::vector<double>(NCOLS, 0.0));
+            vegetation = std::vector<std::vector<double>>(NROWS, std::vector<double>(NCOLS, 0.0));
             arrival_time = std::vector<std::vector<int>>(NROWS, std::vector<int>(NCOLS, 0));
+            
             std::ifstream file("layers/ele.asc");
             if (file.is_open()) {
                 std::string line;
@@ -67,6 +70,10 @@ class Grid
         {
             return arrival_time[cell.second][cell.first];
         }
+        double get_vegetation(std::pair<int, int> cell)
+        {
+            return vegetation[cell.second][cell.first];
+        }
         void set_population(std::pair<int, int> cell, double new_population)
         {
             population[cell.second][cell.first] = new_population;
@@ -75,8 +82,29 @@ class Grid
         {
             arrival_time[cell.second][cell.first] = arrival_date;
         }
+        void update(int time_step)
+        {
+            std::string filename {"layers/veg/veg" + std::to_string(time_step) + ".asc"};
+            std::ifstream file(filename);
+            if (file.is_open()) {
+                std::string line;
+                // Skip header
+                for (int i {0}; i < 6; ++i)
+                    std::getline(file, line);
+                int row {0};
+                while (std::getline(file, line))
+                {
+                    int col {0};
+                    std::stringstream split(line);
+                    double value;
+                    while (split >> value)
+                        vegetation[row][col++] = value;
+                    ++row;
+                }
+            }
+            file.close();
+        }
 };
-
 
 class Model
 {
@@ -91,6 +119,7 @@ class Model
         Model(int start, int k, double r) : date{start}, k{k}, r{r}, grid()
         {
             pop_cells.reserve(NCOLS * NROWS);
+            grid.update(start);
             init_pop();
         }
         void init_pop() {
@@ -100,6 +129,7 @@ class Model
             grid.set_population(coords, 625.0);
             //pop[coords.second][coords.first] = 625.0;
             pop_cells.push_back(std::make_pair(coords.first, coords.second));
+            grid.set_arrival_time(std::make_pair(coords.first, coords.second), date);
         }
         void grow_pop() {
             for (auto cell: pop_cells) {
@@ -119,7 +149,8 @@ class Model
                         (cell.first+i >= 0 && cell.first+i < NCOLS) &&
                         (cell.second+j >= 0 && cell.second+j < NROWS) &&
                         grid.get_elevation(std::make_pair(cell.first+i, cell.second+j)) >= 0 &&
-                        grid.get_population(std::make_pair(cell.first+i, cell.second+j)) < k)
+                        grid.get_population(std::make_pair(cell.first+i, cell.second+j)) < k &&
+                        grid.get_vegetation(std::make_pair(cell.first+i, cell.second+j)) >= 0.0)
                         {
                         //ele[cell.second+j][cell.first+i] >= 0 &&
                         //pop[cell.second+j][cell.first+i] < k) {
@@ -179,6 +210,8 @@ class Model
         }
         void run(int num_iter) {
             for (int i {0}; i < num_iter; ++i) {
+                if (date % 100 == 0)
+                    grid.update(date);
                 grow_pop();
                 fission();
                 --date;
@@ -191,7 +224,7 @@ int main()
     // start date, k, r
     int start = 4400;
     Model model(start, 625, 0.02);
-    model.run(1000);
+    model.run(3900);
     model.write();
     return 0;
 }
