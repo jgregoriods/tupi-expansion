@@ -137,8 +137,8 @@ class Model
                     if (nbr.size() > 0) {
                         //pop[cell.second][cell.first] /= 2;
                         double cell_population = grid.get_population(cell);
-                        cell_population /= 2;
-                        grid.set_population(cell, cell_population);
+                        double migrants = cell_population * 0.1;
+                        grid.set_population(cell, cell_population - migrants);
                         for (auto new_cell: nbr) {
                             //double migrants = pop[cell.second][cell.first];
                             //if (pop[new_cell.second][new_cell.first] == 0) {
@@ -149,7 +149,7 @@ class Model
                                 grid.set_arrival_time(new_cell, date);
                             }
                             double new_cell_population = grid.get_population(new_cell);
-                            new_cell_population += cell_population / 8;
+                            new_cell_population += migrants / nbr.size();
                             grid.set_population(new_cell, new_cell_population);
                             //pop[new_cell.second][new_cell.first] += migrants / 8;
                         }
@@ -191,7 +191,7 @@ int main()
     // start date, k, r
     int start = 4400;
     Model model(start, 625, 0.02);
-    model.run(3000);
+    model.run(1000);
     model.write();
     return 0;
 }
