@@ -124,8 +124,8 @@ bool Grid::is_suitable(std::pair<int, int> cell) {
         (cell.second >= 0 && cell.second < NROWS) &&
         get_elevation(cell) >= 0 &&
         get_population(cell) < model->get_k() &&
-        get_vegetation(cell) >= 0.4 &&
-        get_suitability(cell) >= 0.2)
+        get_vegetation(cell) >= 0.5 &&
+        get_suitability(cell) >= 0.1)
             return true;
     return false;
 }
