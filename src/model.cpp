@@ -108,3 +108,37 @@ int Model::get_k() {
 int Model::get_leap_dist() {
     return leap_dist;
 }
+
+void Model::load_dates() {
+    std::ifstream file("dates/dates.txt");
+    if (file.is_open()) {
+        std::string line {};
+        while (std::getline(file, line)) {
+            Date date;
+            std::stringstream split(line);
+            split >> date.name >> date.x >> date.y >> date.cal_bp;
+            dates.push_back(date);
+        }
+    }
+    file.close();
+}
+
+double Model::get_score() {
+    load_dates();
+    int total;
+    for (auto date: dates) {
+        auto coords = grid->to_grid(date.x, date.y);
+        int sim_bp = grid->get_arrival_time(coords);
+        if (sim_bp == 0) {
+            for (int i {-1}; i < 1 && sim_bp == 0; ++i){
+                for (int j {-1}; j < 1 && sim_bp == 0; ++j) {
+                    std::pair<int, int> nbr = std::make_pair(coords.first+i, coords.second+j);
+                    if (grid->get_arrival_time(nbr) != 0)
+                        sim_bp = grid->get_arrival_time(nbr);
+                }
+            }
+        }
+        total += abs(sim_bp - date.cal_bp);
+    }
+    return total / dates.size();
+}

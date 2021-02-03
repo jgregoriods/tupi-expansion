@@ -5,6 +5,13 @@
 #include <utility>
 #include "grid.h"
 
+struct Date {
+    std::string name {};
+    double x {};
+    double y {};
+    int cal_bp {};
+};
+
 class Grid;
 
 class Model {
@@ -15,10 +22,11 @@ class Model {
         int leap_dist;
         int date;
         std::vector<std::pair<int, int>> pop_cells;
+        Grid* grid;
 
     public:
+        std::vector<Date> dates;
         Model(int start, int k, double r, double pct_move, int leap_dist);
-        Grid* grid;
         ~Model();
         void init_pop();
         void grow_pop();
@@ -27,6 +35,8 @@ class Model {
         void run(int num_iter);
         int get_k();
         int get_leap_dist();
+        void load_dates();
+        double get_score();
 };
 
 #endif

@@ -6,8 +6,9 @@
 int main() {
     // start date, k, r
     int start = 4400;
-    Model model(start, 625, 0.02, 0.1, 3);
+    Model model(start, 625, 0.02, 0.1, 2);
     model.run(3900);
     model.write();
+    model.get_score();
     return 0;
 }
