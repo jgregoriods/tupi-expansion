@@ -1,12 +1,25 @@
-#include "grid.h"
+#include <math.h>
+#include <iostream>
 
-Grid::Grid() {
+#include "grid.h"
+#include "model.h"
+
+Grid::Grid(Model& model) : model{&model} {
     population = std::vector<std::vector<double>>(NROWS, std::vector<double>(NCOLS, 0.0));
     elevation = std::vector<std::vector<double>>(NROWS, std::vector<double>(NCOLS, 0.0));
     vegetation = std::vector<std::vector<double>>(NROWS, std::vector<double>(NCOLS, 0.0));
     suitability = std::vector<std::vector<double>>(NROWS, std::vector<double>(NCOLS, 0.0));
     arrival_time = std::vector<std::vector<int>>(NROWS, std::vector<int>(NCOLS, 0));
-    
+
+    leap_mask.reserve(100);
+    int d = model.get_leap_dist();
+    for (int i {-d}; i <= d; ++i)
+        for (int j {-d}; j <= d; ++j) {
+            std::pair<int, int> new_cell = std::make_pair(0, 0);
+            if (get_distance(std::make_pair(0, 0), std::make_pair(i, j)) == d)
+                leap_mask.push_back(std::make_pair(i, j));
+    }
+
     std::ifstream file("layers/ele.asc");
     if (file.is_open()) {
         std::string line;
@@ -104,4 +117,65 @@ void Grid::update(int time_step) {
         }
     }
     file.close();
+}
+
+bool Grid::is_suitable(std::pair<int, int> cell) {
+    if ((cell.first >= 0 && cell.first < NCOLS) &&
+        (cell.second >= 0 && cell.second < NROWS) &&
+        get_elevation(cell) >= 0 &&
+        get_population(cell) < model->get_k() &&
+        get_vegetation(cell) >= 0.5 &&
+        get_suitability(cell) >= 0.2)
+            return true;
+    return false;
+}
+
+std::vector<std::pair<int, int>> Grid::get_neighbors(std::pair<int, int> cell) {
+    std::vector<std::pair<int, int>> nearest;
+    nearest.reserve(8);
+    for (int i {-1}; i <= 1; ++i)
+        for (int j {-1}; j <= 1; ++j) {
+            std::pair<int, int> new_cell = std::make_pair(cell.first+i, cell.second+j);
+            if ((i != 0 || j != 0) && is_suitable(new_cell))
+                nearest.push_back(new_cell);
+        }
+    return nearest;
+}
+
+int Grid::get_distance(std::pair<int, int> cell_a, std::pair<int, int> cell_b) {
+    int x_a {cell_a.first};
+    int x_b {cell_b.first};
+
+    int y_a {cell_a.second};
+    int y_b {cell_b.second};
+
+    return round(sqrt(pow(x_a - x_b, 2) + pow(y_a - y_b, 2)));
+}
+
+std::vector<std::pair<int, int>> Grid::get_leap_cells(std::pair<int, int> cell) {
+    std::vector<std::pair<int, int>> cells;
+    cells.reserve(100);
+    /*
+    int d = model->get_leap_dist();
+    for (int i {-d}; i <= d; ++i)
+        for (int j {-d}; j <= d; ++j) {
+            std::pair<int, int> new_cell = std::make_pair(cell.first+i, cell.second+j);
+            if ((i != 0 || j != 0) && get_distance(cell, new_cell) == d && is_suitable(new_cell))
+                cells.push_back(new_cell);
+        }
+    */
+    for (auto dist: leap_mask) {
+        std::pair<int, int> new_cell = std::make_pair(cell.first+dist.first, cell.second+dist.second);
+        if (is_suitable(new_cell))
+            cells.push_back(new_cell);
+    }
+    return cells;
+}
+
+std::pair<int, int> Grid::get_best_cell(std::vector<std::pair<int, int>> cells) {
+    auto best_cell = cells[0];
+    for (auto cell: cells)
+        if (get_suitability(cell) > get_suitability(best_cell))
+            best_cell = cell;
+    return best_cell;
 }
