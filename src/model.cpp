@@ -93,6 +93,7 @@ void Model::write() {
 
 void Model::run(int num_iter) {
     for (int i {0}; i < num_iter; ++i) {
+        write_snapshot();
         if (date % 100 == 0)
             grid->update(date);
         grow_pop();
@@ -125,7 +126,7 @@ void Model::load_dates() {
 
 double Model::get_score() {
     load_dates();
-    int total;
+    int total {};
     for (auto date: dates) {
         auto coords = grid->to_grid(date.x, date.y);
         int sim_bp = grid->get_arrival_time(coords);
@@ -141,4 +142,14 @@ double Model::get_score() {
         total += abs(sim_bp - date.cal_bp);
     }
     return total / dates.size();
+}
+
+// remove
+void Model::write_snapshot() {
+    std::string filename {"python/snapshots/" + std::to_string(date) + ".csv"};
+    std::ofstream file;
+    file.open(filename);
+    for (auto cell: pop_cells)
+        file << cell.first << "," << cell.second << "," << grid->get_population(cell) << "\n";
+    file.close();
 }

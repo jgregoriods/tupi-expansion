@@ -37,6 +37,7 @@ class Model {
         int get_leap_dist();
         void load_dates();
         double get_score();
+        void write_snapshot(); // remove later
 };
 
 #endif
