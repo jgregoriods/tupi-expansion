@@ -122,10 +122,10 @@ void Grid::update(int time_step) {
 bool Grid::is_suitable(std::pair<int, int> cell) {
     if ((cell.first >= 0 && cell.first < NCOLS) &&
         (cell.second >= 0 && cell.second < NROWS) &&
-        get_elevation(cell) >= 0 &&
+        get_elevation(cell) >= 0 && get_elevation(cell) <= 1000 &&
         get_population(cell) < model->get_k() &&
-        get_vegetation(cell) >= 0.5 &&
-        get_suitability(cell) >= 0.1)
+        get_vegetation(cell) >= 0.4 &&
+        get_suitability(cell) >= 0.0)
             return true;
     return false;
 }
