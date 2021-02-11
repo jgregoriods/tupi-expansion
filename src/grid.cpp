@@ -4,18 +4,16 @@
 #include "grid.h"
 #include "model.h"
 
-Grid::Grid(Model& model) : model{&model} {
-    population = std::vector<std::vector<double>>(NROWS, std::vector<double>(NCOLS, 0.0));
-    elevation = std::vector<std::vector<double>>(NROWS, std::vector<double>(NCOLS, 0.0));
-    vegetation = std::vector<std::vector<double>>(NROWS, std::vector<double>(NCOLS, 0.0));
-    suitability = std::vector<std::vector<double>>(NROWS, std::vector<double>(NCOLS, 0.0));
-    arrival_time = std::vector<std::vector<int>>(NROWS, std::vector<int>(NCOLS, 0));
-
-    leap_mask.reserve(100);
+Grid::Grid(Model& model) :
+    model{&model},
+    population {std::vector<std::vector<double>>(NROWS, std::vector<double>(NCOLS, 0.0))},
+    elevation {std::vector<std::vector<double>>(NROWS, std::vector<double>(NCOLS, 0.0))},
+    vegetation {std::vector<std::vector<double>>(NROWS, std::vector<double>(NCOLS, 0.0))},
+    suitability {std::vector<std::vector<double>>(NROWS, std::vector<double>(NCOLS, 0.0))},
+    arrival_time {std::vector<std::vector<int>>(NROWS, std::vector<int>(NCOLS, 0))} {
     int d = model.get_leap_dist();
     for (int i {-d}; i <= d; ++i)
         for (int j {-d}; j <= d; ++j) {
-            std::pair<int, int> new_cell = std::make_pair(0, 0);
             if (get_distance(std::make_pair(0, 0), std::make_pair(i, j)) == d)
                 leap_mask.push_back(std::make_pair(i, j));
     }

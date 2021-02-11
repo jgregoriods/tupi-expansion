@@ -18,15 +18,17 @@ class Model {
     private:
         int k;
         double r;
-        double pct_move;
-        int leap_dist;
+        double pct_migrants;
+        int leap_distance;
         int date;
-        std::vector<std::pair<int, int>> pop_cells;
+        double forest_threshold;
+        std::vector<std::pair<int, int>> settled_cells;
         Grid* grid;
 
     public:
-        std::vector<Date> dates;
-        Model(int start, int k, double r, double pct_move, int leap_dist);
+        std::vector<Date> archaeo_dates;
+        Model(int start_date, int k, double r, double pct_migrants,
+              int leap_distance, double forest_threshold);
         ~Model();
         void init_pop();
         void grow_pop();

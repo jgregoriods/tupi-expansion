@@ -14,18 +14,19 @@ const int NROWS {330};
 const double MIN_X {-2985163.8955};
 const double MAX_Y {5227968.786};
 const int CELL_SIZE {25000};
+const int CELL_AREA {625};
 
 class Model;
 
 class Grid {
     private:
+        Model* model;
         std::vector<std::vector<double>> population;
         std::vector<std::vector<double>> elevation;
         std::vector<std::vector<double>> vegetation;
         std::vector<std::vector<double>> suitability;
         std::vector<std::vector<int>> arrival_time;
         std::vector<std::pair<int, int>> leap_mask;
-        Model* model;
 
     public:
         Grid(Model& model);

@@ -2,17 +2,18 @@
 
 #include "model.h"
 
-Model::Model(int start, int k, double r, double pct_move, int leap_dist) :
-    date {start},
+Model::Model(int start_date, int k, double r, double pct_migrants,
+             int leap_distance, double forest_threshold) :
     k {k},
     r {r},
-    pct_move {pct_move},
-    leap_dist {leap_dist},
-    grid {nullptr}
-    {
+    pct_migrants {pct_migrants},
+    leap_distance {leap_distance},
+    date {start_date},
+    forest_threshold {forest_threshold},
+    grid {nullptr} {
         grid = new Grid(*this);
-        pop_cells.reserve(NCOLS * NROWS);
-        grid->update(start);
+        settled_cells.reserve(NCOLS * NROWS);
+        grid->update(start_date);
         init_pop();
 }
 
@@ -25,50 +26,50 @@ void Model::init_pop() {
     double y {2409569.58522236};
     std::pair<int, int> coords = grid->to_grid(x, y);
     grid->set_population(coords, 625.0);
-    pop_cells.push_back(std::make_pair(coords.first, coords.second));
+    settled_cells.push_back(std::make_pair(coords.first, coords.second));
     grid->set_arrival_time(std::make_pair(coords.first, coords.second), date);
 }
 
 void Model::grow_pop() {
-    for (auto cell: pop_cells) {
-        double cell_population = grid->get_population(cell);
-        cell_population += cell_population * r;
-        grid->set_population(cell, cell_population);
+    for (auto cell: settled_cells) {
+        double population = grid->get_population(cell);
+        population += population * r;
+        grid->set_population(cell, population);
     }
 }
 
 void Model::fission() {
-    size_t last_cell = pop_cells.size();
+    size_t last_cell = settled_cells.size();
     for (size_t i {0}; i < last_cell; ++i) {
-        if (grid->get_population(pop_cells[i]) > k) {
-            auto nbr = grid->get_neighbors(pop_cells[i]);
-            if (nbr.size() > 0) {
+        if (grid->get_population(settled_cells[i]) > k) {
+            auto neighbors = grid->get_neighbors(settled_cells[i]);
+            if (neighbors.size() > 0) {
                 bool jumped {};
-                double cell_population = grid->get_population(pop_cells[i]);
-                double migrants = cell_population * pct_move;
-                grid->set_population(pop_cells[i], cell_population - migrants);
-                for (auto new_cell: nbr) {
-                    auto chosen_cell {new_cell};
-                    if (!jumped && leap_dist > 0) {
-                        auto test = grid->get_leap_cells(pop_cells[i]);
-                        if (test.size() > 0) {
-                            auto best_cell = grid->get_best_cell(test);
-                            if (grid->get_suitability(best_cell) > grid->get_suitability(new_cell)) {
+                double population = grid->get_population(settled_cells[i]);
+                double migrants = population * pct_migrants;
+                grid->set_population(settled_cells[i], population - migrants);
+                for (auto cell: neighbors) {
+                    auto chosen_cell {cell};
+                    if (!jumped && leap_distance > 0) {
+                        auto destinations = grid->get_leap_cells(settled_cells[i]);
+                        if (destinations.size() > 0) {
+                            auto best_cell = grid->get_best_cell(destinations);
+                            if (grid->get_suitability(best_cell) > grid->get_suitability(cell)) {
                                 chosen_cell = best_cell;
                                 jumped = true;
                             }
                         }
                     }
-                    if (grid->get_population(chosen_cell) == 0) {
-                        pop_cells.push_back(chosen_cell);
+                    if (grid->get_arrival_time(chosen_cell) == 0) {
+                        settled_cells.push_back(chosen_cell);
                         grid->set_arrival_time(chosen_cell, date);
                     }
-                    double new_cell_population = grid->get_population(chosen_cell);
-                    new_cell_population += migrants / nbr.size();
-                    grid->set_population(chosen_cell, new_cell_population);
+                    double chosen_cell_population = grid->get_population(chosen_cell);
+                    chosen_cell_population += migrants / neighbors.size();
+                    grid->set_population(chosen_cell, chosen_cell_population);
                 }
             } else {
-                grid->set_population(pop_cells[i], k);
+                grid->set_population(settled_cells[i], k);
             }
         }
     }
@@ -107,7 +108,7 @@ int Model::get_k() {
 }
 
 int Model::get_leap_dist() {
-    return leap_dist;
+    return leap_distance;
 }
 
 void Model::load_dates() {
@@ -115,10 +116,14 @@ void Model::load_dates() {
     if (file.is_open()) {
         std::string line {};
         while (std::getline(file, line)) {
-            Date date;
+            std::string name {};
+            double x {};
+            double y {};
+            int cal_bp {};
             std::stringstream split(line);
-            split >> date.name >> date.x >> date.y >> date.cal_bp;
-            dates.push_back(date);
+            split >> name >> x >> y >> cal_bp;
+            Date new_date {name, x, y, cal_bp};
+            archaeo_dates.push_back(new_date);
         }
     }
     file.close();
@@ -127,21 +132,22 @@ void Model::load_dates() {
 double Model::get_score() {
     load_dates();
     int total {};
-    for (auto date: dates) {
+    for (auto date: archaeo_dates) {
         auto coords = grid->to_grid(date.x, date.y);
-        int sim_bp = grid->get_arrival_time(coords);
-        if (sim_bp == 0) {
-            for (int i {-1}; i < 1 && sim_bp == 0; ++i){
-                for (int j {-1}; j < 1 && sim_bp == 0; ++j) {
-                    std::pair<int, int> nbr = std::make_pair(coords.first+i, coords.second+j);
-                    if (grid->get_arrival_time(nbr) != 0)
-                        sim_bp = grid->get_arrival_time(nbr);
+        int sim_date = grid->get_arrival_time(coords);
+        if (sim_date == 0) {
+            for (int i {-1}; i < 1 && sim_date == 0; ++i){
+                for (int j {-1}; j < 1 && sim_date == 0; ++j) {
+                    std::pair<int, int> neighbor = std::make_pair(coords.first+i, coords.second+j);
+                    int neighbor_date = grid->get_arrival_time(neighbor);
+                    if (neighbor_date != 0)
+                        sim_date = neighbor_date;
                 }
             }
         }
-        total += abs(sim_bp - date.cal_bp);
+        total += abs(sim_date - date.cal_bp);
     }
-    return total / dates.size();
+    return total / archaeo_dates.size();
 }
 
 // remove
@@ -149,7 +155,7 @@ void Model::write_snapshot() {
     std::string filename {"python/snapshots/" + std::to_string(date) + ".csv"};
     std::ofstream file;
     file.open(filename);
-    for (auto cell: pop_cells)
+    for (auto cell: settled_cells)
         file << cell.first << "," << cell.second << "," << grid->get_population(cell) << "\n";
     file.close();
 }
