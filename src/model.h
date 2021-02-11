@@ -35,7 +35,6 @@ class Model {
         void fission();
         void write();
         void run(int num_iter);
-        int get_k();
         int get_leap_dist();
         void load_dates();
         double get_score();

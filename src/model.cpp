@@ -1,4 +1,5 @@
 #include <iostream>
+#include <cmath>
 
 #include "model.h"
 
@@ -11,7 +12,7 @@ Model::Model(int start_date, int k, double r, double pct_migrants,
     date {start_date},
     forest_threshold {forest_threshold},
     grid {nullptr} {
-        grid = new Grid(*this);
+        grid = new Grid(k, forest_threshold, leap_distance);
         settled_cells.reserve(NCOLS * NROWS);
         grid->update(start_date);
         init_pop();
@@ -25,7 +26,7 @@ void Model::init_pop() {
     double x {-167889.855960219};
     double y {2409569.58522236};
     std::pair<int, int> coords = grid->to_grid(x, y);
-    grid->set_population(coords, 625.0);
+    grid->set_population(coords, k * CELL_AREA);
     settled_cells.push_back(std::make_pair(coords.first, coords.second));
     grid->set_arrival_time(std::make_pair(coords.first, coords.second), date);
 }
@@ -41,7 +42,7 @@ void Model::grow_pop() {
 void Model::fission() {
     size_t last_cell = settled_cells.size();
     for (size_t i {0}; i < last_cell; ++i) {
-        if (grid->get_population(settled_cells[i]) > k) {
+        if (grid->get_population(settled_cells[i]) > k * CELL_AREA) {
             auto neighbors = grid->get_neighbors(settled_cells[i]);
             if (neighbors.size() > 0) {
                 bool jumped {};
@@ -69,7 +70,7 @@ void Model::fission() {
                     grid->set_population(chosen_cell, chosen_cell_population);
                 }
             } else {
-                grid->set_population(settled_cells[i], k);
+                grid->set_population(settled_cells[i], k * CELL_AREA);
             }
         }
     }
@@ -101,10 +102,6 @@ void Model::run(int num_iter) {
         fission();
         --date;
     }
-}
-
-int Model::get_k() {
-    return k;
 }
 
 int Model::get_leap_dist() {
@@ -145,9 +142,9 @@ double Model::get_score() {
                 }
             }
         }
-        total += abs(sim_date - date.cal_bp);
+        total += pow(sim_date - date.cal_bp, 2);
     }
-    return total / archaeo_dates.size();
+    return sqrt(total / archaeo_dates.size());
 }
 
 // remove

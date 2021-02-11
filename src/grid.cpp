@@ -2,19 +2,20 @@
 #include <iostream>
 
 #include "grid.h"
-#include "model.h"
 
-Grid::Grid(Model& model) :
-    model{&model},
+Grid::Grid(int k, double forest_threshold, int leap_distance) :
+    k {k},
+    forest_threshold {forest_threshold},
     population {std::vector<std::vector<double>>(NROWS, std::vector<double>(NCOLS, 0.0))},
     elevation {std::vector<std::vector<double>>(NROWS, std::vector<double>(NCOLS, 0.0))},
     vegetation {std::vector<std::vector<double>>(NROWS, std::vector<double>(NCOLS, 0.0))},
     suitability {std::vector<std::vector<double>>(NROWS, std::vector<double>(NCOLS, 0.0))},
     arrival_time {std::vector<std::vector<int>>(NROWS, std::vector<int>(NCOLS, 0))} {
-    int d = model.get_leap_dist();
-    for (int i {-d}; i <= d; ++i)
-        for (int j {-d}; j <= d; ++j) {
-            if (get_distance(std::make_pair(0, 0), std::make_pair(i, j)) == d)
+    
+    int dist = leap_distance / (CELL_SIZE / 1000);
+    for (int i {-dist}; i <= dist; ++i)
+        for (int j {-dist}; j <= dist; ++j) {
+            if (get_distance(std::make_pair(0, 0), std::make_pair(i, j)) == dist)
                 leap_mask.push_back(std::make_pair(i, j));
     }
 
@@ -121,8 +122,8 @@ bool Grid::is_suitable(std::pair<int, int> cell) {
     if ((cell.first >= 0 && cell.first < NCOLS) &&
         (cell.second >= 0 && cell.second < NROWS) &&
         get_elevation(cell) >= 0 && get_elevation(cell) <= 1000 &&
-        get_population(cell) < model->get_k() &&
-        get_vegetation(cell) >= 0.4 &&
+        get_population(cell) < k * CELL_AREA &&
+        get_vegetation(cell) >= forest_threshold &&
         get_suitability(cell) >= 0.0)
             return true;
     return false;
@@ -153,15 +154,6 @@ int Grid::get_distance(std::pair<int, int> cell_a, std::pair<int, int> cell_b) {
 std::vector<std::pair<int, int>> Grid::get_leap_cells(std::pair<int, int> cell) {
     std::vector<std::pair<int, int>> cells;
     cells.reserve(100);
-    /*
-    int d = model->get_leap_dist();
-    for (int i {-d}; i <= d; ++i)
-        for (int j {-d}; j <= d; ++j) {
-            std::pair<int, int> new_cell = std::make_pair(cell.first+i, cell.second+j);
-            if ((i != 0 || j != 0) && get_distance(cell, new_cell) == d && is_suitable(new_cell))
-                cells.push_back(new_cell);
-        }
-    */
     for (auto dist: leap_mask) {
         std::pair<int, int> new_cell = std::make_pair(cell.first+dist.first, cell.second+dist.second);
         if (is_suitable(new_cell))
