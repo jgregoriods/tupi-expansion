@@ -93,7 +93,7 @@ void Model::write() {
 
 void Model::run(int num_iter) {
     for (int i {0}; i < num_iter; ++i) {
-        write_snapshot();
+        //write_snapshot();
         if (date % 100 == 0)
             grid->update(date);
         grow_pop();
