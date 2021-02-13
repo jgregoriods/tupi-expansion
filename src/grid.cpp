@@ -3,7 +3,7 @@
 
 #include "grid.h"
 
-Grid::Grid(int k, double forest_threshold, int leap_distance) :
+Grid::Grid(double k, double forest_threshold, int leap_distance) :
     k {k},
     forest_threshold {forest_threshold},
     population {std::vector<std::vector<double>>(NROWS, std::vector<double>(NCOLS, 0.0))},

@@ -3,7 +3,7 @@
 
 #include "model.h"
 
-Model::Model(int start_date, int k, double r, double pct_migrants,
+Model::Model(int start_date, double k, double r, double pct_migrants,
              int leap_distance, double forest_threshold) :
     k {k},
     r {r},
@@ -26,7 +26,7 @@ void Model::init_pop() {
     double x {-167889.855960219};
     double y {2409569.58522236};
     std::pair<int, int> coords = grid->to_grid(x, y);
-    grid->set_population(coords, k * CELL_AREA);
+    grid->set_population(coords, k * CELL_AREA / 2);
     settled_cells.push_back(std::make_pair(coords.first, coords.second));
     grid->set_arrival_time(std::make_pair(coords.first, coords.second), date);
 }
@@ -34,7 +34,10 @@ void Model::init_pop() {
 void Model::grow_pop() {
     for (auto cell: settled_cells) {
         double population = grid->get_population(cell);
+        population += population * r * (((k * CELL_AREA) - population) / (k * CELL_AREA));
+        /*
         population += population * r;
+        */
         grid->set_population(cell, population);
     }
 }
@@ -42,7 +45,7 @@ void Model::grow_pop() {
 void Model::fission() {
     size_t last_cell = settled_cells.size();
     for (size_t i {0}; i < last_cell; ++i) {
-        if (grid->get_population(settled_cells[i]) > k * CELL_AREA) {
+        if (grid->get_population(settled_cells[i]) > (k * CELL_AREA) * 0.5) {
             auto neighbors = grid->get_neighbors(settled_cells[i]);
             if (neighbors.size() > 0) {
                 bool jumped {};
@@ -69,9 +72,9 @@ void Model::fission() {
                     chosen_cell_population += migrants / neighbors.size();
                     grid->set_population(chosen_cell, chosen_cell_population);
                 }
-            } else {
-                grid->set_population(settled_cells[i], k * CELL_AREA);
-            }
+            }// else {
+            //    grid->set_population(settled_cells[i], k * CELL_AREA);
+            //}
         }
     }
 }

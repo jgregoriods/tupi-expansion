@@ -12,7 +12,7 @@ const int NROWS {330};
 const double MIN_X {-2985163.8955};
 const double MAX_Y {5227968.786};
 const int CELL_SIZE {25000};
-const int CELL_AREA {625};
+const double CELL_AREA {625.0};
 
 class Grid {
     private:
@@ -22,11 +22,11 @@ class Grid {
         std::vector<std::vector<double>> suitability;
         std::vector<std::vector<int>> arrival_time;
         std::vector<std::pair<int, int>> leap_mask;
-        int k;
+        double k;
         double forest_threshold;
 
     public:
-        Grid(int k, double forest_threshold, int leap_distance);
+        Grid(double k, double forest_threshold, int leap_distance);
         std::pair<int, int> to_grid(double x, double y);
         std::pair<double, double> to_albers(int x, int y);
         double get_population(std::pair<int, int> cell);
