@@ -4,13 +4,14 @@
 #include "model.h"
 
 Model::Model(int start_date, double k, double r, double pct_migrants,
-             int leap_distance, double forest_threshold) :
+             int leap_distance, double forest_threshold, double fission_threshold) :
     k {k},
     r {r},
     pct_migrants {pct_migrants},
     leap_distance {leap_distance},
     date {start_date},
     forest_threshold {forest_threshold},
+    fission_threshold {fission_threshold},
     grid {nullptr} {
         grid = new Grid(k, forest_threshold, leap_distance);
         settled_cells.reserve(NCOLS * NROWS);
@@ -45,7 +46,7 @@ void Model::grow_pop() {
 void Model::fission() {
     size_t last_cell = settled_cells.size();
     for (size_t i {0}; i < last_cell; ++i) {
-        if (grid->get_population(settled_cells[i]) > (k * CELL_AREA) * 0.5) {
+        if (grid->get_population(settled_cells[i]) > (k * CELL_AREA) * fission_threshold) {
             auto neighbors = grid->get_neighbors(settled_cells[i]);
             if (neighbors.size() > 0) {
                 bool jumped {};
@@ -145,6 +146,7 @@ double Model::get_score() {
                 }
             }
         }
+        std::cout << sim_date << std::endl;
         total += pow(sim_date - date.cal_bp, 2);
     }
     return sqrt(total / archaeo_dates.size());

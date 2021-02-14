@@ -22,13 +22,14 @@ class Model {
         int leap_distance;
         int date;
         double forest_threshold;
+        double fission_threshold;
         std::vector<std::pair<int, int>> settled_cells;
         Grid* grid;
 
     public:
         std::vector<Date> archaeo_dates;
         Model(int start_date, double k, double r, double pct_migrants,
-              int leap_distance, double forest_threshold);
+              int leap_distance, double forest_threshold, double fission_threshold);
         ~Model();
         void init_pop();
         void grow_pop();

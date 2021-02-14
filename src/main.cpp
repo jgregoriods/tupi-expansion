@@ -4,10 +4,11 @@
 #include "model.h"
 #include "grid.h"
 
+
 int main(const int argc, const char* argv[]) {
-    if (argc < 7) {
+    if (argc < 8) {
         std::cerr << "Usage:" << std::endl
-                  << "./expand <start date> <k> <r> <% migrants> <leap distance> <forest thr.>"
+                  << "./expand <start date> <k> <r> <% migrants> <leap distance> <forest thr.> <fission thr.> [-w]"
                   << std::endl;
         return 1;
     }
@@ -17,9 +18,11 @@ int main(const int argc, const char* argv[]) {
     double pct_migrants = std::stod(argv[4]);
     int leap_distance = std::stoi(argv[5]);
     double forest_threshold = std::stod(argv[6]);
-    Model model(start_date, k, r, pct_migrants, leap_distance, forest_threshold);
+    double fission_threshold = std::stod(argv[7]);
+    Model model(start_date, k, r, pct_migrants, leap_distance, forest_threshold, fission_threshold);
     model.run(start_date - 500);
-    model.write();
+    if (argc > 8 && std::string(argv[8]) == "-w")
+        model.write();
     std::cout << model.get_score() << std::endl;
     return 0;
 }
