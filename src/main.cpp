@@ -6,6 +6,7 @@
 
 
 int main(const int argc, const char* argv[]) {
+    std::cout << "hello" << std::endl;
     if (argc < 8) {
         std::cerr << "Usage:" << std::endl
                   << "./expand <start date> <k> <r> <% migrants> <leap distance> <forest thr.> <fission thr.> [-w]"
