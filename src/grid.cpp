@@ -10,7 +10,8 @@ Grid::Grid(double k, double forest_threshold, int leap_distance) :
     elevation {std::vector<std::vector<double>>(NROWS, std::vector<double>(NCOLS, 0.0))},
     vegetation {std::vector<std::vector<double>>(NROWS, std::vector<double>(NCOLS, 0.0))},
     suitability {std::vector<std::vector<double>>(NROWS, std::vector<double>(NCOLS, 0.0))},
-    arrival_time {std::vector<std::vector<int>>(NROWS, std::vector<int>(NCOLS, 0))} {
+    arrival_time {std::vector<std::vector<int>>(NROWS, std::vector<int>(NCOLS, 0))},
+    mt {123} {
     
     int dist = leap_distance / (CELL_SIZE / 1000);
     for (int i {-dist}; i <= dist; ++i)
@@ -163,9 +164,11 @@ std::vector<std::pair<int, int>> Grid::get_leap_cells(std::pair<int, int> cell) 
 }
 
 std::pair<int, int> Grid::get_best_cell(std::vector<std::pair<int, int>> cells) {
-    auto best_cell = cells[0];
-    for (auto cell: cells)
-        if (get_suitability(cell) > get_suitability(best_cell))
-            best_cell = cell;
+    //auto best_cell = cells[0];
+    //for (auto cell: cells)
+    //    if (get_suitability(cell) > get_suitability(best_cell))
+    //        best_cell = cell;
+    std::uniform_int_distribution<int> dist(0, cells.size() - 1);
+    auto best_cell = cells[dist(mt)];
     return best_cell;
 }

@@ -35,10 +35,10 @@ void Model::init_pop() {
 void Model::grow_pop() {
     for (auto cell: settled_cells) {
         double population = grid->get_population(cell);
-        population += population * r * (((k * CELL_AREA) - population) / (k * CELL_AREA));
-        /*
+        //population += population * r * (((k * CELL_AREA) - population) / (k * CELL_AREA));
         population += population * r;
-        */
+        if (population > k * CELL_AREA)
+            population = k * CELL_AREA;
         grid->set_population(cell, population);
     }
 }
@@ -49,6 +49,25 @@ void Model::fission() {
         if (grid->get_population(settled_cells[i]) > (k * CELL_AREA) * fission_threshold) {
             auto neighbors = grid->get_neighbors(settled_cells[i]);
             if (neighbors.size() > 0) {
+                double population = grid->get_population(settled_cells[i]);
+                double migrants = population - ((k * CELL_AREA) * fission_threshold);
+                auto chosen_cell = grid->get_best_cell(neighbors);
+                
+                grid->set_population(settled_cells[i], population - migrants);
+                double chosen_cell_population = grid->get_population(chosen_cell) + migrants;
+                grid->set_population(chosen_cell, chosen_cell_population);
+
+                if (grid->get_arrival_time(chosen_cell) == 0) {
+                        settled_cells.push_back(chosen_cell);
+                        grid->set_arrival_time(chosen_cell, date);
+                    }
+            }
+
+            else if (leap_distance) {
+                
+            }
+
+                /*
                 bool jumped {};
                 double population = grid->get_population(settled_cells[i]);
                 double migrants = population * pct_migrants;
@@ -72,8 +91,9 @@ void Model::fission() {
                     double chosen_cell_population = grid->get_population(chosen_cell);
                     chosen_cell_population += migrants / neighbors.size();
                     grid->set_population(chosen_cell, chosen_cell_population);
-                }
-            }// else {
+                } */
+            // }
+            // else {
             //    grid->set_population(settled_cells[i], k * CELL_AREA);
             //}
         }
@@ -146,7 +166,6 @@ double Model::get_score() {
                 }
             }
         }
-        std::cout << sim_date << std::endl;
         total += pow(sim_date - date.cal_bp, 2);
     }
     return sqrt(total / archaeo_dates.size());

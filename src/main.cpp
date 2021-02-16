@@ -6,7 +6,7 @@
 
 
 int main(const int argc, const char* argv[]) {
-    std::cout << "hello" << std::endl;
+    std::cout << "hello from the rnd branch" << std::endl;
     if (argc < 8) {
         std::cerr << "Usage:" << std::endl
                   << "./expand <start date> <k> <r> <% migrants> <leap distance> <forest thr.> <fission thr.> [-w]"
@@ -24,6 +24,6 @@ int main(const int argc, const char* argv[]) {
     model.run(start_date - 500);
     if (argc > 8 && std::string(argv[8]) == "-w")
         model.write();
-    std::cout << model.get_score() << std::endl;
+    //std::cout << model.get_score() << std::endl;
     return 0;
 }

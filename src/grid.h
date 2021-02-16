@@ -6,6 +6,7 @@
 #include <string>
 #include <sstream>
 #include <math.h>
+#include <random>
 
 const int NCOLS {255};
 const int NROWS {330};
@@ -13,6 +14,7 @@ const double MIN_X {-2985163.8955};
 const double MAX_Y {5227968.786};
 const int CELL_SIZE {25000};
 const double CELL_AREA {625.0};
+
 
 class Grid {
     private:
@@ -24,6 +26,7 @@ class Grid {
         std::vector<std::pair<int, int>> leap_mask;
         double k;
         double forest_threshold;
+        std::mt19937 mt; // change to mt(123) to seed
 
     public:
         Grid(double k, double forest_threshold, int leap_distance);
