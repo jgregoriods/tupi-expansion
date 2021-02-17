@@ -18,7 +18,6 @@ class Model {
     private:
         double k;
         double r;
-        double pct_migrants;
         int leap_distance;
         int date;
         double forest_threshold;
@@ -28,8 +27,8 @@ class Model {
 
     public:
         std::vector<Date> archaeo_dates;
-        Model(int start_date, double k, double r, double pct_migrants,
-              int leap_distance, double forest_threshold, double fission_threshold);
+        Model(int start_date, double k, double r, int leap_distance,
+              double forest_threshold, double fission_threshold);
         ~Model();
         void init_pop();
         void grow_pop();

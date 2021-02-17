@@ -21,9 +21,9 @@ class Grid {
         std::vector<std::vector<double>> population;
         std::vector<std::vector<double>> elevation;
         std::vector<std::vector<double>> vegetation;
-        std::vector<std::vector<double>> suitability;
         std::vector<std::vector<int>> arrival_time;
         std::vector<std::pair<int, int>> leap_mask;
+        std::vector<std::pair<int, int>> neighbor_mask;
         double k;
         double forest_threshold;
         std::mt19937 mt; // change to mt(123) to seed
@@ -36,7 +36,6 @@ class Grid {
         double get_elevation(std::pair<int, int> cell);
         int get_arrival_time(std::pair<int, int> cell);
         double get_vegetation(std::pair<int, int> cell);
-        double get_suitability(std::pair<int, int> cell);
         void set_population(std::pair<int, int> cell, double new_population);
         void set_arrival_time(std::pair<int, int> cell, int arrival_date);
         void update(int time_step);

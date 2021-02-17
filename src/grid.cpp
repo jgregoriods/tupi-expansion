@@ -9,7 +9,6 @@ Grid::Grid(double k, double forest_threshold, int leap_distance) :
     population {std::vector<std::vector<double>>(NROWS, std::vector<double>(NCOLS, 0.0))},
     elevation {std::vector<std::vector<double>>(NROWS, std::vector<double>(NCOLS, 0.0))},
     vegetation {std::vector<std::vector<double>>(NROWS, std::vector<double>(NCOLS, 0.0))},
-    suitability {std::vector<std::vector<double>>(NROWS, std::vector<double>(NCOLS, 0.0))},
     arrival_time {std::vector<std::vector<int>>(NROWS, std::vector<int>(NCOLS, 0))},
     mt {123} {
     
@@ -18,6 +17,15 @@ Grid::Grid(double k, double forest_threshold, int leap_distance) :
         for (int j {-dist}; j <= dist; ++j) {
             if (get_distance(std::make_pair(0, 0), std::make_pair(i, j)) == dist)
                 leap_mask.push_back(std::make_pair(i, j));
+    
+    neighbor_mask = {std::make_pair(-1, -1),
+                    std::make_pair(0, -1),
+                    std::make_pair(1, -1),
+                    std::make_pair(-1, 0),
+                    std::make_pair(1, 0),
+                    std::make_pair(-1, 1),
+                    std::make_pair(0, 1),
+                    std::make_pair(1, 1)};
     }
 
     std::ifstream file("layers/ele.asc");
@@ -33,24 +41,6 @@ Grid::Grid(double k, double forest_threshold, int leap_distance) :
             double value;
             while (split >> value)
                 elevation[row][col++] = value;
-            ++row;
-        }
-    }
-    file.close();
-
-    std::ifstream file2("layers/maxent.asc");
-    if (file2.is_open()) {
-        std::string line;
-        // Skip header
-        for (int i {0}; i < 6; ++i)
-            std::getline(file2, line);
-        int row {0};
-        while (std::getline(file2, line)) {
-            int col {0};
-            std::stringstream split(line);
-            double value;
-            while (split >> value)
-                suitability[row][col++] = value;
             ++row;
         }
     }
@@ -86,10 +76,6 @@ double Grid::get_vegetation(std::pair<int, int> cell) {
     return vegetation[cell.second][cell.first];
 }
 
-double Grid::get_suitability(std::pair<int, int> cell) {
-    return suitability[cell.second][cell.first];
-}
-
 void Grid::set_population(std::pair<int, int> cell, double new_population) {
     population[cell.second][cell.first] = new_population;
 }
@@ -99,7 +85,7 @@ void Grid::set_arrival_time(std::pair<int, int> cell, int arrival_date) {
 }
 
 void Grid::update(int time_step) {
-    std::string filename {"layers/veg/veg" + std::to_string(time_step) + ".asc"};
+    std::string filename {"layers/veg/veg_" + std::to_string(time_step) + ".asc"};
     std::ifstream file(filename);
     if (file.is_open()) {
         std::string line;
@@ -122,10 +108,9 @@ void Grid::update(int time_step) {
 bool Grid::is_suitable(std::pair<int, int> cell) {
     if ((cell.first >= 0 && cell.first < NCOLS) &&
         (cell.second >= 0 && cell.second < NROWS) &&
-        get_elevation(cell) >= 0 && get_elevation(cell) <= 1000 &&
         get_population(cell) < k * CELL_AREA &&
         get_vegetation(cell) >= forest_threshold &&
-        get_suitability(cell) >= 0.0)
+        get_elevation(cell) >= 0 && get_elevation(cell) <= 1000)
             return true;
     return false;
 }
@@ -135,8 +120,11 @@ std::vector<std::pair<int, int>> Grid::get_neighbors(std::pair<int, int> cell) {
     nearest.reserve(8);
     for (int i {-1}; i <= 1; ++i)
         for (int j {-1}; j <= 1; ++j) {
+    //for (auto nbr: neighbor_mask) {
             std::pair<int, int> new_cell = std::make_pair(cell.first+i, cell.second+j);
             if ((i != 0 || j != 0) && is_suitable(new_cell))
+            //std::pair<int, int> new_cell = std::make_pair(cell.first+nbr.first, cell.second+nbr.second);
+            //if (is_suitable(new_cell))
                 nearest.push_back(new_cell);
         }
     return nearest;
@@ -155,8 +143,8 @@ int Grid::get_distance(std::pair<int, int> cell_a, std::pair<int, int> cell_b) {
 std::vector<std::pair<int, int>> Grid::get_leap_cells(std::pair<int, int> cell) {
     std::vector<std::pair<int, int>> cells;
     cells.reserve(100);
-    for (auto dist: leap_mask) {
-        std::pair<int, int> new_cell = std::make_pair(cell.first+dist.first, cell.second+dist.second);
+    for (auto leap_cell: leap_mask) {
+        std::pair<int, int> new_cell = std::make_pair(cell.first+leap_cell.first, cell.second+leap_cell.second);
         if (is_suitable(new_cell))
             cells.push_back(new_cell);
     }
@@ -164,10 +152,6 @@ std::vector<std::pair<int, int>> Grid::get_leap_cells(std::pair<int, int> cell) 
 }
 
 std::pair<int, int> Grid::get_best_cell(std::vector<std::pair<int, int>> cells) {
-    //auto best_cell = cells[0];
-    //for (auto cell: cells)
-    //    if (get_suitability(cell) > get_suitability(best_cell))
-    //        best_cell = cell;
     std::uniform_int_distribution<int> dist(0, cells.size() - 1);
     auto best_cell = cells[dist(mt)];
     return best_cell;

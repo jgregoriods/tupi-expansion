@@ -3,11 +3,10 @@
 
 #include "model.h"
 
-Model::Model(int start_date, double k, double r, double pct_migrants,
-             int leap_distance, double forest_threshold, double fission_threshold) :
+Model::Model(int start_date, double k, double r, int leap_distance,
+             double forest_threshold, double fission_threshold) :
     k {k},
     r {r},
-    pct_migrants {pct_migrants},
     leap_distance {leap_distance},
     date {start_date},
     forest_threshold {forest_threshold},
@@ -47,7 +46,12 @@ void Model::fission() {
     size_t last_cell = settled_cells.size();
     for (size_t i {0}; i < last_cell; ++i) {
         if (grid->get_population(settled_cells[i]) > (k * CELL_AREA) * fission_threshold) {
+
             auto neighbors = grid->get_neighbors(settled_cells[i]);
+
+            if (neighbors.size() == 0 && leap_distance > 0)
+                neighbors = grid->get_leap_cells(settled_cells[i]);
+            
             if (neighbors.size() > 0) {
                 double population = grid->get_population(settled_cells[i]);
                 double migrants = population - ((k * CELL_AREA) * fission_threshold);
@@ -58,44 +62,10 @@ void Model::fission() {
                 grid->set_population(chosen_cell, chosen_cell_population);
 
                 if (grid->get_arrival_time(chosen_cell) == 0) {
-                        settled_cells.push_back(chosen_cell);
-                        grid->set_arrival_time(chosen_cell, date);
-                    }
+                    settled_cells.push_back(chosen_cell);
+                    grid->set_arrival_time(chosen_cell, date);
+                }
             }
-
-            else if (leap_distance) {
-                
-            }
-
-                /*
-                bool jumped {};
-                double population = grid->get_population(settled_cells[i]);
-                double migrants = population * pct_migrants;
-                grid->set_population(settled_cells[i], population - migrants);
-                for (auto cell: neighbors) {
-                    auto chosen_cell {cell};
-                    if (!jumped && leap_distance > 0) {
-                        auto destinations = grid->get_leap_cells(settled_cells[i]);
-                        if (destinations.size() > 0) {
-                            auto best_cell = grid->get_best_cell(destinations);
-                            if (grid->get_suitability(best_cell) > grid->get_suitability(cell)) {
-                                chosen_cell = best_cell;
-                                jumped = true;
-                            }
-                        }
-                    }
-                    if (grid->get_arrival_time(chosen_cell) == 0) {
-                        settled_cells.push_back(chosen_cell);
-                        grid->set_arrival_time(chosen_cell, date);
-                    }
-                    double chosen_cell_population = grid->get_population(chosen_cell);
-                    chosen_cell_population += migrants / neighbors.size();
-                    grid->set_population(chosen_cell, chosen_cell_population);
-                } */
-            // }
-            // else {
-            //    grid->set_population(settled_cells[i], k * CELL_AREA);
-            //}
         }
     }
 }
