@@ -1,5 +1,4 @@
 #include <iostream>
-#include <cmath>
 
 #include "model.h"
 
@@ -26,7 +25,7 @@ void Model::init_pop() {
     double x {-167889.855960219};
     double y {2409569.58522236};
     std::pair<int, int> coords = grid->to_grid(x, y);
-    grid->set_population(coords, k * CELL_AREA / 2);
+    grid->set_population(coords, round(k * CELL_AREA / 2));
     settled_cells.push_back(std::make_pair(coords.first, coords.second));
     grid->set_arrival_time(std::make_pair(coords.first, coords.second), date);
 }
@@ -35,9 +34,9 @@ void Model::grow_pop() {
     for (auto cell: settled_cells) {
         double population = grid->get_population(cell);
         //population += population * r * (((k * CELL_AREA) - population) / (k * CELL_AREA));
-        population += population * r;
-        if (population > k * CELL_AREA)
-            population = k * CELL_AREA;
+        population += round(population * r);
+        if (population > round(k * CELL_AREA))
+            population = round(k * CELL_AREA);
         grid->set_population(cell, population);
     }
 }
@@ -45,7 +44,7 @@ void Model::grow_pop() {
 void Model::fission() {
     size_t last_cell = settled_cells.size();
     for (size_t i {0}; i < last_cell; ++i) {
-        if (grid->get_population(settled_cells[i]) > (k * CELL_AREA) * fission_threshold) {
+        if (grid->get_population(settled_cells[i]) > round((k * CELL_AREA) * fission_threshold)) {
 
             auto neighbors = grid->get_neighbors(settled_cells[i]);
 
@@ -54,7 +53,7 @@ void Model::fission() {
             
             if (neighbors.size() > 0) {
                 double population = grid->get_population(settled_cells[i]);
-                double migrants = population - ((k * CELL_AREA) * fission_threshold);
+                double migrants = population - round((k * CELL_AREA) * fission_threshold);
                 auto chosen_cell = grid->get_best_cell(neighbors);
                 
                 grid->set_population(settled_cells[i], population - migrants);
