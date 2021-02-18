@@ -11,7 +11,7 @@ Model::Model(int start_date, double k, double r, int leap_distance,
     forest_threshold {forest_threshold},
     fission_threshold {fission_threshold},
     grid {nullptr} {
-        grid = new Grid(k, forest_threshold, leap_distance);
+        grid = new Grid(k, forest_threshold, leap_distance, *this);
         settled_cells.reserve(NCOLS * NROWS);
         grid->update(start_date);
         init_pop();
@@ -32,7 +32,7 @@ void Model::init_pop() {
 
 void Model::grow_pop() {
     for (auto cell: settled_cells) {
-        double population = grid->get_population(cell);
+        int population = grid->get_population(cell);
         //population += population * r * (((k * CELL_AREA) - population) / (k * CELL_AREA));
         population += round(population * r);
         if (population > round(k * CELL_AREA))
@@ -52,12 +52,12 @@ void Model::fission() {
                 neighbors = grid->get_leap_cells(settled_cells[i]);
             
             if (neighbors.size() > 0) {
-                double population = grid->get_population(settled_cells[i]);
-                double migrants = population - round((k * CELL_AREA) * fission_threshold);
+                int population = grid->get_population(settled_cells[i]);
+                int migrants = population - round((k * CELL_AREA) * fission_threshold);
                 auto chosen_cell = grid->get_best_cell(neighbors);
                 
                 grid->set_population(settled_cells[i], population - migrants);
-                double chosen_cell_population = grid->get_population(chosen_cell) + migrants;
+                int chosen_cell_population = grid->get_population(chosen_cell) + migrants;
                 grid->set_population(chosen_cell, chosen_cell_population);
 
                 if (grid->get_arrival_time(chosen_cell) == 0) {

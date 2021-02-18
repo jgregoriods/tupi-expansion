@@ -3,29 +3,22 @@
 
 #include "grid.h"
 
-Grid::Grid(double k, double forest_threshold, int leap_distance) :
+Grid::Grid(double k, double forest_threshold, int leap_distance, Model& model) :
     k {k},
     forest_threshold {forest_threshold},
-    population {std::vector<std::vector<double>>(NROWS, std::vector<double>(NCOLS, 0.0))},
+    population {std::vector<std::vector<int>>(NROWS, std::vector<int>(NCOLS, 0.0))},
     elevation {std::vector<std::vector<double>>(NROWS, std::vector<double>(NCOLS, 0.0))},
     vegetation {std::vector<std::vector<double>>(NROWS, std::vector<double>(NCOLS, 0.0))},
     arrival_time {std::vector<std::vector<int>>(NROWS, std::vector<int>(NCOLS, 0))},
-    mt {123} {
+    mt {123},
+    model {&model}
+    {
     
     int dist = leap_distance / (CELL_SIZE / 1000);
     for (int i {-dist}; i <= dist; ++i)
         for (int j {-dist}; j <= dist; ++j) {
             if (get_distance(std::make_pair(0, 0), std::make_pair(i, j)) == dist)
                 leap_mask.push_back(std::make_pair(i, j));
-    
-    neighbor_mask = {std::make_pair(-1, -1),
-                    std::make_pair(0, -1),
-                    std::make_pair(1, -1),
-                    std::make_pair(-1, 0),
-                    std::make_pair(1, 0),
-                    std::make_pair(-1, 1),
-                    std::make_pair(0, 1),
-                    std::make_pair(1, 1)};
     }
 
     std::ifstream file("layers/ele.asc");
@@ -60,7 +53,7 @@ std::pair<double, double> Grid::to_albers(int x, int y) {
     return std::make_pair(albers_x, albers_y);
 }
 
-double Grid::get_population(std::pair<int, int> cell) {
+int Grid::get_population(std::pair<int, int> cell) {
     return population[cell.second][cell.first];
 }
 
@@ -76,7 +69,7 @@ double Grid::get_vegetation(std::pair<int, int> cell) {
     return vegetation[cell.second][cell.first];
 }
 
-void Grid::set_population(std::pair<int, int> cell, double new_population) {
+void Grid::set_population(std::pair<int, int> cell, int new_population) {
     population[cell.second][cell.first] = new_population;
 }
 
@@ -108,7 +101,7 @@ void Grid::update(int time_step) {
 bool Grid::is_suitable(std::pair<int, int> cell) {
     if ((cell.first >= 0 && cell.first < NCOLS) &&
         (cell.second >= 0 && cell.second < NROWS) &&
-        get_population(cell) < k * CELL_AREA &&
+        get_population(cell) < round(k * CELL_AREA) &&
         get_vegetation(cell) >= forest_threshold &&
         get_elevation(cell) >= 0 && get_elevation(cell) <= 1000)
             return true;
