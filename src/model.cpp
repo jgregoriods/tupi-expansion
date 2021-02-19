@@ -2,16 +2,16 @@
 
 #include "model.h"
 
-Model::Model(int start_date, double k, double r, int leap_distance,
-             double forest_threshold, double fission_threshold) :
-    k {k},
-    r {r},
-    leap_distance {leap_distance},
+Model::Model(int start_date, double k, double r, double fission_threshold,
+             int leap_distance, double forest_threshold) :
     date {start_date},
+    k {round(k * CELL_AREA)},
+    r {r},
+    fission_threshold {round(fission_threshold * k * CELL_AREA)},
+    leap_distance {leap_distance},
     forest_threshold {forest_threshold},
-    fission_threshold {fission_threshold},
     grid {nullptr} {
-        grid = new Grid(k, forest_threshold, leap_distance, *this);
+        grid = new Grid(*this);
         settled_cells.reserve(NCOLS * NROWS);
         grid->update(start_date);
         init_pop();
@@ -21,11 +21,15 @@ Model::~Model() {
     delete grid;
 }
 
+double Model::get_k() {
+    return k;
+}
+
 void Model::init_pop() {
     double x {-167889.855960219};
     double y {2409569.58522236};
     std::pair<int, int> coords = grid->to_grid(x, y);
-    grid->set_population(coords, round(k * CELL_AREA / 2));
+    grid->set_population(coords, k);
     settled_cells.push_back(std::make_pair(coords.first, coords.second));
     grid->set_arrival_time(std::make_pair(coords.first, coords.second), date);
 }
@@ -33,10 +37,11 @@ void Model::init_pop() {
 void Model::grow_pop() {
     for (auto cell: settled_cells) {
         int population = grid->get_population(cell);
-        //population += population * r * (((k * CELL_AREA) - population) / (k * CELL_AREA));
+        
         population += round(population * r);
-        if (population > round(k * CELL_AREA))
-            population = round(k * CELL_AREA);
+        if (population > k)
+            population = k;
+        
         grid->set_population(cell, population);
     }
 }
@@ -44,7 +49,7 @@ void Model::grow_pop() {
 void Model::fission() {
     size_t last_cell = settled_cells.size();
     for (size_t i {0}; i < last_cell; ++i) {
-        if (grid->get_population(settled_cells[i]) > round((k * CELL_AREA) * fission_threshold)) {
+        if (grid->get_population(settled_cells[i]) > fission_threshold) {
 
             auto neighbors = grid->get_neighbors(settled_cells[i]);
 
@@ -53,7 +58,7 @@ void Model::fission() {
             
             if (neighbors.size() > 0) {
                 int population = grid->get_population(settled_cells[i]);
-                int migrants = population - round((k * CELL_AREA) * fission_threshold);
+                int migrants = population - fission_threshold;
                 auto chosen_cell = grid->get_best_cell(neighbors);
                 
                 grid->set_population(settled_cells[i], population - migrants);
@@ -94,50 +99,43 @@ void Model::run(int num_iter) {
         grow_pop();
         fission();
         --date;
+        if (settled_cells.size() > 22500) break;
     }
+}
+
+double Model::get_forest_threshold() {
+    return forest_threshold;
 }
 
 int Model::get_leap_dist() {
     return leap_distance;
 }
 
-void Model::load_dates() {
-    std::ifstream file("dates/dates.txt");
+double Model::get_fission_threshold() {
+    return fission_threshold;
+}
+
+void Model::get_dates() {
+    std::ifstream file("sites/sites.txt");
     if (file.is_open()) {
         std::string line {};
         while (std::getline(file, line)) {
             std::string name {};
             double x {};
             double y {};
-            int cal_bp {};
             std::stringstream split(line);
-            split >> name >> x >> y >> cal_bp;
-            Date new_date {name, x, y, cal_bp};
-            archaeo_dates.push_back(new_date);
+            split >> name >> x >> y;
+            auto coords = grid->to_grid(x, y);
+            int date = grid->get_arrival_time(coords);
+            if (!date)
+                for (int i {-1}; i <= 1 && !date; ++i)
+                    for (int j {-1}; j <= 1 && !date; ++j)
+                        date = grid->get_arrival_time(std::make_pair(coords.first+i, coords.second+j));
+            Site site {name, x, y, date};
+            sites.push_back(site);
         }
     }
     file.close();
-}
-
-double Model::get_score() {
-    load_dates();
-    int total {};
-    for (auto date: archaeo_dates) {
-        auto coords = grid->to_grid(date.x, date.y);
-        int sim_date = grid->get_arrival_time(coords);
-        if (sim_date == 0) {
-            for (int i {-1}; i < 1 && sim_date == 0; ++i){
-                for (int j {-1}; j < 1 && sim_date == 0; ++j) {
-                    std::pair<int, int> neighbor = std::make_pair(coords.first+i, coords.second+j);
-                    int neighbor_date = grid->get_arrival_time(neighbor);
-                    if (neighbor_date != 0)
-                        sim_date = neighbor_date;
-                }
-            }
-        }
-        total += pow(sim_date - date.cal_bp, 2);
-    }
-    return sqrt(total / archaeo_dates.size());
 }
 
 // remove

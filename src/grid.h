@@ -27,13 +27,11 @@ class Grid {
         std::vector<std::vector<int>> arrival_time;
         std::vector<std::pair<int, int>> leap_mask;
         std::vector<std::pair<int, int>> neighbor_mask;
-        double k;
-        double forest_threshold;
         std::mt19937 mt; // change to mt(123) to seed
         Model* model;
 
     public:
-        Grid(double k, double forest_threshold, int leap_distance, Model& model);
+        Grid(Model& model);
         std::pair<int, int> to_grid(double x, double y);
         std::pair<double, double> to_albers(int x, int y);
         int get_population(std::pair<int, int> cell);

@@ -7,9 +7,14 @@
 
 int main(const int argc, const char* argv[]) {
     std::cout << "hello from the rnd branch" << std::endl;
+
+    if (std::string(argv[1]) == "-t") {
+        
+    }
+
     if (argc < 7) {
         std::cerr << "Usage:" << std::endl
-                  << "./expand <start date> <k> <r> <leap distance> <forest thr.> <fission thr.> [-w]"
+                  << "./expand <start date> <k> <r> <fission thr.> <leap distance> <forest thr.> [-w]"
                   << std::endl;
         return 1;
     }
@@ -17,15 +22,18 @@ int main(const int argc, const char* argv[]) {
     int start_date = std::stoi(argv[1]);
     double k = std::stod(argv[2]);
     double r = std::stod(argv[3]);
-    int leap_distance = std::stoi(argv[4]);
-    double forest_threshold = std::stod(argv[5]);
-    double fission_threshold = std::stod(argv[6]);
+    double fission_threshold = std::stod(argv[4]);
+    int leap_distance = std::stoi(argv[5]);
+    double forest_threshold = std::stod(argv[6]);
 
-    Model model(start_date, k, r, leap_distance, forest_threshold, fission_threshold);
+    Model model(start_date, k, r, fission_threshold, leap_distance,
+                forest_threshold);
     model.run(start_date - 500);
 
     if (argc > 7 && std::string(argv[7]) == "-w")
         model.write();
-    //std::cout << model.get_score() << std::endl;
+
+    model.get_dates();
+
     return 0;
 }

@@ -3,24 +3,19 @@
 
 #include "grid.h"
 
-Grid::Grid(double k, double forest_threshold, int leap_distance, Model& model) :
-    k {k},
-    forest_threshold {forest_threshold},
+Grid::Grid(Model& model) :
     population {std::vector<std::vector<int>>(NROWS, std::vector<int>(NCOLS, 0.0))},
     elevation {std::vector<std::vector<double>>(NROWS, std::vector<double>(NCOLS, 0.0))},
     vegetation {std::vector<std::vector<double>>(NROWS, std::vector<double>(NCOLS, 0.0))},
     arrival_time {std::vector<std::vector<int>>(NROWS, std::vector<int>(NCOLS, 0))},
     mt {123},
-    model {&model}
-    {
-    
-    int dist = leap_distance / (CELL_SIZE / 1000);
+    model {&model} {
+    int dist = model.get_leap_dist() / (CELL_SIZE / 1000);
     for (int i {-dist}; i <= dist; ++i)
         for (int j {-dist}; j <= dist; ++j) {
             if (get_distance(std::make_pair(0, 0), std::make_pair(i, j)) == dist)
                 leap_mask.push_back(std::make_pair(i, j));
     }
-
     std::ifstream file("layers/ele.asc");
     if (file.is_open()) {
         std::string line;
@@ -101,8 +96,8 @@ void Grid::update(int time_step) {
 bool Grid::is_suitable(std::pair<int, int> cell) {
     if ((cell.first >= 0 && cell.first < NCOLS) &&
         (cell.second >= 0 && cell.second < NROWS) &&
-        get_population(cell) < round(k * CELL_AREA) &&
-        get_vegetation(cell) >= forest_threshold &&
+        get_population(cell) < round(model->get_k()) &&
+        get_vegetation(cell) >= model->get_forest_threshold() &&
         get_elevation(cell) >= 0 && get_elevation(cell) <= 1000)
             return true;
     return false;
@@ -113,11 +108,8 @@ std::vector<std::pair<int, int>> Grid::get_neighbors(std::pair<int, int> cell) {
     nearest.reserve(8);
     for (int i {-1}; i <= 1; ++i)
         for (int j {-1}; j <= 1; ++j) {
-    //for (auto nbr: neighbor_mask) {
             std::pair<int, int> new_cell = std::make_pair(cell.first+i, cell.second+j);
             if ((i != 0 || j != 0) && is_suitable(new_cell))
-            //std::pair<int, int> new_cell = std::make_pair(cell.first+nbr.first, cell.second+nbr.second);
-            //if (is_suitable(new_cell))
                 nearest.push_back(new_cell);
         }
     return nearest;

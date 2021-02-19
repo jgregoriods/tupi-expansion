@@ -5,30 +5,19 @@
 #include <utility>
 #include "grid.h"
 
-struct Date {
+struct Site {
     std::string name {};
     double x {};
     double y {};
-    int cal_bp {};
+    int date {};
 };
 
 class Grid;
 
 class Model {
-    private:
-        double k;
-        double r;
-        int leap_distance;
-        int date;
-        double forest_threshold;
-        double fission_threshold;
-        std::vector<std::pair<int, int>> settled_cells;
-        Grid* grid;
-
     public:
-        std::vector<Date> archaeo_dates;
-        Model(int start_date, double k, double r, int leap_distance,
-              double forest_threshold, double fission_threshold);
+        Model(int start_date, double k, double r, double fission_threshold,
+              int leap_distance, double forest_threshold);
         ~Model();
         void init_pop();
         void grow_pop();
@@ -36,9 +25,22 @@ class Model {
         void write();
         void run(int num_iter);
         int get_leap_dist();
-        void load_dates();
-        double get_score();
+        double get_k();
+        double get_forest_threshold();
+        double get_fission_threshold();
+        void get_dates();
         void write_snapshot(); // remove later
+        std::vector<Site> sites;
+
+    private:
+        int date;
+        double k;
+        double r;
+        double fission_threshold;
+        int leap_distance;
+        double forest_threshold;
+        Grid* grid;
+        std::vector<std::pair<int, int>> settled_cells;
 };
 
 #endif

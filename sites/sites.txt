@@ -1,0 +1,5 @@
+parana_basin 787924 1201888
+east_amazon 1267236 3046729
+south_coast 1715115 974134
+central_brazil 1220653 2050601
+north_coast 2317989 2105618
