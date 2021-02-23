@@ -8,10 +8,6 @@
 int main(const int argc, const char* argv[]) {
     std::cout << "hello from the rnd branch" << std::endl;
 
-    if (std::string(argv[1]) == "-t") {
-        
-    }
-
     if (argc < 7) {
         std::cerr << "Usage:" << std::endl
                   << "./expand <start date> <k> <r> <fission thr.> <leap distance> <forest thr.> [-w]"

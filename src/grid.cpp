@@ -16,6 +16,12 @@ Grid::Grid(Model& model) :
             if (get_distance(std::make_pair(0, 0), std::make_pair(i, j)) == dist)
                 leap_mask.push_back(std::make_pair(i, j));
     }
+    for (int i {-2}; i <= 2; ++i)
+        for (int j {-2}; j <= 2; ++j) {
+            if ((i != 0 || j != 0) && get_distance(std::make_pair(0, 0), std::make_pair(i, j)) <= 2)
+                neighbor_mask.push_back(std::make_pair(i, j));
+    }
+
     std::ifstream file("layers/ele.asc");
     if (file.is_open()) {
         std::string line;
@@ -96,7 +102,7 @@ void Grid::update(int time_step) {
 bool Grid::is_suitable(std::pair<int, int> cell) {
     if ((cell.first >= 0 && cell.first < NCOLS) &&
         (cell.second >= 0 && cell.second < NROWS) &&
-        get_population(cell) < round(model->get_k()) &&
+        get_population(cell) < round(model->get_fission_threshold()) &&
         get_vegetation(cell) >= model->get_forest_threshold() &&
         get_elevation(cell) >= 0 && get_elevation(cell) <= 1000)
             return true;
@@ -105,6 +111,7 @@ bool Grid::is_suitable(std::pair<int, int> cell) {
 
 std::vector<std::pair<int, int>> Grid::get_neighbors(std::pair<int, int> cell) {
     std::vector<std::pair<int, int>> nearest;
+    /*
     nearest.reserve(8);
     for (int i {-1}; i <= 1; ++i)
         for (int j {-1}; j <= 1; ++j) {
@@ -112,6 +119,13 @@ std::vector<std::pair<int, int>> Grid::get_neighbors(std::pair<int, int> cell) {
             if ((i != 0 || j != 0) && is_suitable(new_cell))
                 nearest.push_back(new_cell);
         }
+    */
+   nearest.reserve(19);
+    for (auto nbr_cell: neighbor_mask) {
+        std::pair<int, int> new_cell = std::make_pair(cell.first+nbr_cell.first, cell.second+nbr_cell.second);
+        if (is_suitable(new_cell))
+            nearest.push_back(new_cell);
+    }
     return nearest;
 }
 

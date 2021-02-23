@@ -37,8 +37,8 @@ void Model::init_pop() {
 void Model::grow_pop() {
     for (auto cell: settled_cells) {
         int population = grid->get_population(cell);
-        
         population += round(population * r);
+        // population += population * r * ((k - population) / k);
         if (population > k)
             population = k;
         
