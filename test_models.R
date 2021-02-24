@@ -28,7 +28,8 @@ test_model <- function(params, date, coords, forest_threshold) {
 encontro_xy <- c(-167889, 2409569)
 urupa_xy <- c(-208434, 2438371)
 
-final <- do.call(rbind, mclapply(param_list, test_model, 4400, encontro_xy, 0.0, mc.cores=11))
-final_veg <- do.call(rbind, mclapply(param_list, test_model, 4400, encontro_xy, 0.5, mc.cores=11))
+num_cores <- detectCores() - 1
+final <- do.call(rbind, mclapply(param_list, test_model, 4400, encontro_xy, 0.0, mc.cores=num_cores))
+final_veg <- do.call(rbind, mclapply(param_list, test_model, 4400, encontro_xy, 0.5, mc.cores=num_cores))
 
 print(Sys.time() - start_time) # remove later
