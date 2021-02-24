@@ -2,8 +2,8 @@
 
 #include "model.h"
 
-Model::Model(int start_date, double k, double r, double fission_threshold,
-             int leap_distance, double forest_threshold) :
+Model::Model(int start_date, int start_x, int start_y, double k, double r,
+             double fission_threshold, int leap_distance, double forest_threshold) :
     date {start_date},
     k {round(k * CELL_AREA)},
     r {r},
@@ -14,7 +14,7 @@ Model::Model(int start_date, double k, double r, double fission_threshold,
         grid = new Grid(*this);
         settled_cells.reserve(NCOLS * NROWS);
         grid->update(start_date);
-        init_pop();
+        init_pop(start_x, start_y);
 }
 
 Model::~Model() {
@@ -25,9 +25,7 @@ double Model::get_k() {
     return k;
 }
 
-void Model::init_pop() {
-    double x {-167889.855960219};
-    double y {2409569.58522236};
+void Model::init_pop(int x, int y) {
     std::pair<int, int> coords = grid->to_grid(x, y);
     grid->set_population(coords, k);
     settled_cells.push_back(std::make_pair(coords.first, coords.second));
@@ -136,6 +134,8 @@ void Model::get_dates() {
         }
     }
     file.close();
+    for (auto site: sites)
+        std::cout << site.name << " " << site.date << std::endl;
 }
 
 // remove

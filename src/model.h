@@ -16,10 +16,10 @@ class Grid;
 
 class Model {
     public:
-        Model(int start_date, double k, double r, double fission_threshold,
-              int leap_distance, double forest_threshold);
+        Model(int start_date, int start_x, int start_y, double k, double r,
+              double fission_threshold, int leap_distance, double forest_threshold);
         ~Model();
-        void init_pop();
+        void init_pop(int x, int y);
         void grow_pop();
         void fission();
         void write();
@@ -30,7 +30,6 @@ class Model {
         double get_fission_threshold();
         void get_dates();
         void write_snapshot(); // remove later
-        std::vector<Site> sites;
 
     private:
         int date;
@@ -41,6 +40,7 @@ class Model {
         double forest_threshold;
         Grid* grid;
         std::vector<std::pair<int, int>> settled_cells;
+        std::vector<Site> sites;
 };
 
 #endif

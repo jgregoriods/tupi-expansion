@@ -8,7 +8,7 @@ Grid::Grid(Model& model) :
     elevation {std::vector<std::vector<double>>(NROWS, std::vector<double>(NCOLS, 0.0))},
     vegetation {std::vector<std::vector<double>>(NROWS, std::vector<double>(NCOLS, 0.0))},
     arrival_time {std::vector<std::vector<int>>(NROWS, std::vector<int>(NCOLS, 0))},
-    mt {123},
+    mt {time(NULL)},
     model {&model} {
     int dist = model.get_leap_dist() / (CELL_SIZE / 1000);
     for (int i {-dist}; i <= dist; ++i)
@@ -41,7 +41,7 @@ Grid::Grid(Model& model) :
     file.close();
 }
 
-std::pair<int, int> Grid::to_grid(double x, double y) {
+std::pair<int, int> Grid::to_grid(int x, int y) {
     int grid_x {}, grid_y {};
     grid_x = round((x - MIN_X) / CELL_SIZE);
     grid_y = abs(round((y - MAX_Y) / CELL_SIZE));

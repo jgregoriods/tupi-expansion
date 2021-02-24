@@ -27,12 +27,12 @@ class Grid {
         std::vector<std::vector<int>> arrival_time;
         std::vector<std::pair<int, int>> leap_mask;
         std::vector<std::pair<int, int>> neighbor_mask;
-        std::mt19937 mt; // change to mt(123) to seed
+        std::mt19937 mt;
         Model* model;
 
     public:
         Grid(Model& model);
-        std::pair<int, int> to_grid(double x, double y);
+        std::pair<int, int> to_grid(int x, int y);
         std::pair<double, double> to_albers(int x, int y);
         int get_population(std::pair<int, int> cell);
         double get_elevation(std::pair<int, int> cell);
