@@ -10,22 +10,27 @@ Grid::Grid(Model& model) :
     arrival_time {std::vector<std::vector<int>>(NROWS, std::vector<int>(NCOLS, 0))},
     mt {time(NULL)},
     model {&model} {
+    
+    // Vectors with x, y distances to neighbor and leap cells are calculated
+    // only once to speed up execution.
     int dist = model.get_leap_dist() / (CELL_SIZE / 1000);
     for (int i {-dist}; i <= dist; ++i)
         for (int j {-dist}; j <= dist; ++j) {
             if (get_distance(std::make_pair(0, 0), std::make_pair(i, j)) == dist)
                 leap_mask.push_back(std::make_pair(i, j));
     }
+
     for (int i {-2}; i <= 2; ++i)
         for (int j {-2}; j <= 2; ++j) {
             if ((i != 0 || j != 0) && get_distance(std::make_pair(0, 0), std::make_pair(i, j)) <= 2)
                 neighbor_mask.push_back(std::make_pair(i, j));
     }
 
+    // Get elevation values from file.
     std::ifstream file("layers/ele.asc");
     if (file.is_open()) {
         std::string line;
-        // Skip header
+        // The asc file has a header of 6 lines which must be skipped
         for (int i {0}; i < 6; ++i)
             std::getline(file, line);
         int row {0};
@@ -37,10 +42,16 @@ Grid::Grid(Model& model) :
                 elevation[row][col++] = value;
             ++row;
         }
+        file.close();
     }
-    file.close();
 }
 
+/*
+* Converts coordinates in Albers equal-area conic projection to grid.
+*
+* @param x X coordinate.
+* @param y Y coordinate.
+*/
 std::pair<int, int> Grid::to_grid(int x, int y) {
     int grid_x {}, grid_y {};
     grid_x = round((x - MIN_X) / CELL_SIZE);
@@ -48,6 +59,12 @@ std::pair<int, int> Grid::to_grid(int x, int y) {
     return std::make_pair(grid_x, grid_y);
 }
 
+/*
+* Converts grid coordinates to Albers equal-area conic projection.
+*
+* @param x X coordinate.
+* @param y Y coordinate.
+*/
 std::pair<double, double> Grid::to_albers(int x, int y) {
     double albers_x {MIN_X + x * CELL_SIZE};
     double albers_y {MAX_Y - y * CELL_SIZE};
@@ -78,12 +95,18 @@ void Grid::set_arrival_time(std::pair<int, int> cell, int arrival_date) {
     arrival_time[cell.second][cell.first] = arrival_date;
 }
 
+/*
+* Updates the grid's vegetation layer. Vegetation values are read from files
+* in the layers/veg folder, interpolated for every 100 years between 6 and 0.5 ka.
+*
+* @param time_step The interpolated time step to update from.
+*/
 void Grid::update(int time_step) {
     std::string filename {"layers/veg/veg_" + std::to_string(time_step) + ".asc"};
     std::ifstream file(filename);
     if (file.is_open()) {
         std::string line;
-        // Skip header
+        // The asc file has a header of 6 lines which must be skipped
         for (int i {0}; i < 6; ++i)
             std::getline(file, line);
         int row {0};
@@ -95,10 +118,17 @@ void Grid::update(int time_step) {
                 vegetation[row][col++] = value;
             ++row;
         }
+        file.close();
     }
-    file.close();
 }
 
+/*
+* Evaluates whether a cell's population, vegetation and elevation values are
+* within a given acceptable range.
+*
+* @param cell The cell to be evaluated.
+* @return A boolean.
+*/
 bool Grid::is_suitable(std::pair<int, int> cell) {
     if ((cell.first >= 0 && cell.first < NCOLS) &&
         (cell.second >= 0 && cell.second < NROWS) &&
@@ -109,36 +139,44 @@ bool Grid::is_suitable(std::pair<int, int> cell) {
     return false;
 }
 
+/*
+* Returns all suitable cells within 50 km of a given cell.
+*
+* @param cell The cell to get neighbors from.
+* @return A vector of cell coordinates (pairs of integers).
+*/
 std::vector<std::pair<int, int>> Grid::get_neighbors(std::pair<int, int> cell) {
-    std::vector<std::pair<int, int>> nearest;
-    /*
-    nearest.reserve(8);
-    for (int i {-1}; i <= 1; ++i)
-        for (int j {-1}; j <= 1; ++j) {
-            std::pair<int, int> new_cell = std::make_pair(cell.first+i, cell.second+j);
-            if ((i != 0 || j != 0) && is_suitable(new_cell))
-                nearest.push_back(new_cell);
-        }
-    */
-   nearest.reserve(19);
+    std::vector<std::pair<int, int>> cells;
+    cells.reserve(19);
     for (auto nbr_cell: neighbor_mask) {
         std::pair<int, int> new_cell = std::make_pair(cell.first+nbr_cell.first, cell.second+nbr_cell.second);
         if (is_suitable(new_cell))
-            nearest.push_back(new_cell);
+            cells.push_back(new_cell);
     }
-    return nearest;
+    return cells;
 }
 
+/*
+* Returns the distance (in cells) between two cells.
+*
+* @param cell_a The first cell.
+* @param cell_b The second cell.
+* @return The distance (in cells) as an integer.
+*/
 int Grid::get_distance(std::pair<int, int> cell_a, std::pair<int, int> cell_b) {
     int x_a {cell_a.first};
     int x_b {cell_b.first};
-
     int y_a {cell_a.second};
     int y_b {cell_b.second};
-
     return round(sqrt(pow(x_a - x_b, 2) + pow(y_a - y_b, 2)));
 }
 
+/*
+* Returns all suitable cells at leap distance from a given cell.
+*
+* @param cell The cell to get destinations from.
+* @return A vector of cell coordinates (pairs of integers).
+*/
 std::vector<std::pair<int, int>> Grid::get_leap_cells(std::pair<int, int> cell) {
     std::vector<std::pair<int, int>> cells;
     cells.reserve(100);
@@ -150,8 +188,14 @@ std::vector<std::pair<int, int>> Grid::get_leap_cells(std::pair<int, int> cell) 
     return cells;
 }
 
-std::pair<int, int> Grid::get_best_cell(std::vector<std::pair<int, int>> cells) {
+/*
+* Returns a random cell from a vector of cells.
+*
+* @param cells A vector of cell coordinates to randomly choose from.
+* @return The chosen cell (a pair of coordinates).
+*/
+std::pair<int, int> Grid::get_rnd_cell(std::vector<std::pair<int, int>> cells) {
     std::uniform_int_distribution<int> dist(0, cells.size() - 1);
-    auto best_cell = cells[dist(mt)];
-    return best_cell;
+    auto cell = cells[dist(mt)];
+    return cell;
 }

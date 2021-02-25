@@ -8,7 +8,7 @@
 int main(const int argc, const char* argv[]) {
     if (argc < 9) {
         std::cerr << "Usage:" << std::endl
-                  << "./expand <start date> <start x> <start y> <k> <r> <fission thr.> <leap distance> <forest thr.> [-w]"
+                  << "./expand <start date> <start x> <start y> <k> <r> <fission threshold> <leap distance> <forest threshold> [-w]"
                   << std::endl;
         return 1;
     }

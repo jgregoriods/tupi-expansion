@@ -23,7 +23,7 @@ class Model {
         void grow_pop();
         void fission();
         void write();
-        void run(int num_iter);
+        void run(int num_steps);
         int get_leap_dist();
         double get_k();
         double get_forest_threshold();
