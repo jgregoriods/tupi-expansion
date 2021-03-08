@@ -1,8 +1,8 @@
 TARGET = expand
 
-CC = g++
+CC = g++ -std=c++17
 CFLAGS = -Ofast
-LINKER = g++
+LINKER = g++ -std=c++17
 
 SRCDIR = src
 OBJDIR = obj

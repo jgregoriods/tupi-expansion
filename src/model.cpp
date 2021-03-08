@@ -130,8 +130,9 @@ void Model::write() {
 */
 void Model::run(int num_steps) {
     for (int i {0}; i < num_steps; ++i) {
+        write_snapshot();
         // The environment is updated every 100 years.
-        if (date % 100 == 0)
+        if (date % 1000 == 0)
             grid->update(date);
         grow_pop();
         fission();

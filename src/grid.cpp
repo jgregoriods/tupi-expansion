@@ -1,4 +1,4 @@
-#include <math.h>
+    #include <math.h>
 #include <iostream>
 
 #include "grid.h"
@@ -8,9 +8,9 @@ Grid::Grid(Model& model) :
     elevation {std::vector<std::vector<double>>(NROWS, std::vector<double>(NCOLS, 0.0))},
     vegetation {std::vector<std::vector<double>>(NROWS, std::vector<double>(NCOLS, 0.0))},
     arrival_time {std::vector<std::vector<int>>(NROWS, std::vector<int>(NCOLS, 0))},
-    mt {time(NULL)},
+    mt {static_cast<unsigned int>(time(NULL))},
     model {&model} {
-    
+
     // Vectors with x, y distances to neighbor and leap cells are calculated
     // only once to speed up execution.
     int dist = model.get_leap_dist() / (CELL_SIZE / 1000);
