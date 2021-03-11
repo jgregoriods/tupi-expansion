@@ -60,9 +60,10 @@ void Model::init_pop(int x, int y) {
 void Model::grow_pop() {
     for (auto cell: settled_cells) {
         int population = grid->get_population(cell);
-        population += round(population * r);
-        if (population > k)
-            population = k;
+        //population += round(population * r);
+        //if (population > k)
+        //    population = k;
+        population += round(r * (k - population) / k * population);
         grid->set_population(cell, population);
     }
 }
@@ -109,11 +110,11 @@ void Model::fission() {
 void Model::write() {
     std::ofstream file;
     file.open("output/arrival_times.asc");
-    file << "NCOLS 255" << std::endl;
-    file << "NROWS 330" << std::endl;
+    file << "NCOLS 128" << std::endl;
+    file << "NROWS 165" << std::endl;
     file << "XLLCORNER -2985163.8955" << std::endl;
     file << "YLLCORNER -3022031.214" << std::endl;
-    file << "CELLSIZE 25000" << std::endl;
+    file << "CELLSIZE 50000" << std::endl;
     file << "NODATA_value 0" << std::endl;
     for (int i {0}; i < NROWS; ++i) {
         for (int j {0}; j < NCOLS; ++j)
@@ -130,7 +131,7 @@ void Model::write() {
 */
 void Model::run(int num_steps) {
     for (int i {0}; i < num_steps; ++i) {
-        write_snapshot();
+        //write_snapshot();
         // The environment is updated every 100 years.
         if (date % 1000 == 0)
             grid->update(date);
@@ -139,7 +140,7 @@ void Model::run(int num_steps) {
         --date;
         // There is no point in continuing execution after all relevant cells
         // have been settled.
-        if (settled_cells.size() > 22500) break;
+        if (settled_cells.size() > 5600) break;
     }
 }
 

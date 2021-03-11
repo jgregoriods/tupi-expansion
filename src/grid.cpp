@@ -1,4 +1,4 @@
-    #include <math.h>
+#include <math.h>
 #include <iostream>
 
 #include "grid.h"
@@ -20,9 +20,9 @@ Grid::Grid(Model& model) :
                 leap_mask.push_back(std::make_pair(i, j));
     }
 
-    for (int i {-2}; i <= 2; ++i)
-        for (int j {-2}; j <= 2; ++j) {
-            if ((i != 0 || j != 0) && get_distance(std::make_pair(0, 0), std::make_pair(i, j)) <= 2)
+    for (int i {-1}; i <= 1; ++i)
+        for (int j {-1}; j <= 1; ++j) {
+            if (i != 0 || j != 0) // && get_distance(std::make_pair(0, 0), std::make_pair(i, j)) <= 1)
                 neighbor_mask.push_back(std::make_pair(i, j));
     }
 
@@ -147,7 +147,7 @@ bool Grid::is_suitable(std::pair<int, int> cell) {
 */
 std::vector<std::pair<int, int>> Grid::get_neighbors(std::pair<int, int> cell) {
     std::vector<std::pair<int, int>> cells;
-    cells.reserve(19);
+    cells.reserve(8);
     for (auto nbr_cell: neighbor_mask) {
         std::pair<int, int> new_cell = std::make_pair(cell.first+nbr_cell.first, cell.second+nbr_cell.second);
         if (is_suitable(new_cell))

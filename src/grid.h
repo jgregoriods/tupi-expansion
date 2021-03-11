@@ -10,12 +10,12 @@
 
 #include "model.h"
 
-const int NCOLS {255};
-const int NROWS {330};
+const int NCOLS {128};
+const int NROWS {365};
 const double MIN_X {-2985163.8955};
 const double MAX_Y {5227968.786};
-const int CELL_SIZE {25000};
-const double CELL_AREA {625.0};
+const int CELL_SIZE {50000};
+const double CELL_AREA {2500.0};
 
 class Model;
 
