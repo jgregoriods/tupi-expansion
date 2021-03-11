@@ -11,7 +11,7 @@
 #include "model.h"
 
 const int NCOLS {128};
-const int NROWS {365};
+const int NROWS {165};
 const double MIN_X {-2985163.8955};
 const double MAX_Y {5227968.786};
 const int CELL_SIZE {50000};
@@ -24,6 +24,7 @@ class Grid {
         std::vector<std::vector<int>> population;
         std::vector<std::vector<double>> elevation;
         std::vector<std::vector<double>> vegetation;
+        std::vector<std::vector<int>> ecotone;
         std::vector<std::vector<int>> arrival_time;
         std::vector<std::pair<int, int>> leap_mask;
         std::vector<std::pair<int, int>> neighbor_mask;

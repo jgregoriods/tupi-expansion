@@ -1,0 +1,267 @@
+plot(condor, xlim=rev(range(condor$calBP)), type="l", col="red")
+install.packages('kknn')
+rich <- read.csv("./Documents/richard.csv")
+rich <- data.frame(lon=rich$Longitude, lat=rich$Latitude, slice=rich$500)
+rich <- data.frame(lon=rich$Longitude, lat=rich$Latitude, slice=rich[["500"]])
+rich <- data.frame(lon=rich$Longitude, lat=rich$Latitude, slice=rich[["500"]], na.rm=F)
+rich <- data.frame(lon=rich$Longitude, lat=rich$Latitude)
+rich[["500"]]
+rich[["X500"]]
+rich["X500"]
+rich["500"]
+rich[500]
+rich[[500]]
+rich$500
+rich
+rich <- read.csv("./Documents/richard.csv")
+rich
+rich$X500
+rich <- data.frame(lon=rich$Longitude, lat=rich$Latitude, slice=rich$X500)
+rich
+library(dplyr)
+richs <- sample_n(rich, 25)
+richs
+rich %<>% st_as_sf(coords=c("lon", "lat"), crs = "+proj=longlat +ellps=WGS84")
+library(sf)
+rich %<>% st_as_sf(coords=c("lon", "lat"), crs = "+proj=longlat +ellps=WGS84")
+library(tidyverse)
+install.packages("tidyverse")
+library(tidyverse)
+rich %<>% st_as_sf(coords=c("lon", "lat"), crs = "+proj=longlat +ellps=WGS84")
+install.packages("magrittr")
+library(magrittr)
+rich %<>% st_as_sf(coords=c("lon", "lat"), crs = "+proj=longlat +ellps=WGS84")
+plot(rich)
+install.pakcages(forcats)
+install.packages("forcats")
+library(forcats)
+grid <- st_make_grid(rich, cellsize=1, n=c(300,300), what="centers")
+plot(grid)
+vegres <- data.frame(veg=as.factor(NA), lon=st_coordinates(grid)[, 1], #
+                                lat = st_coordinates(grid)[, 2])
+vegres
+grid <- st_make_grid(rich, cellsize=1, n=c(100,100), what="centers")
+plot(grid)
+grid <- st_make_grid(rich, cellsize=1, n=c(50,50), what="centers")
+plot(grid)
+vegres <- data.frame(veg=as.factor(NA), lon=st_coordinates(grid)[, 1], #
+                                lat = st_coordinates(grid)[, 2])
+vegres
+library(kknn)
+vegk <- kknn(slice~., train=rich, test=vegres,kernel="gaussian", k=10)
+class(rich)
+richdf <- data.frame(slice=rich$X500, lon=rich$Longitude, lat=rich$Latitude)
+vegk <- kknn(slice~., train=richdf, test=vegres,kernel="gaussian", k=10)
+richdf
+rich
+richdf <- data.frame(slice=rich$slice, lon=rich$Longitude, lat=rich$Latitude)
+richdf <- data.frame(slice=rich$slice, lon=rich$x, lat=rich$y)
+richdf <- data.frame(slice=rich$slice, lon=st_coordinates(rich)[,1], lat=st_coordinates(rich)[,2])
+richdf
+vegk <- kknn(slice~., train=richdf, test=vegres,kernel="gaussian", k=10)
+vegk
+plot(vegk)
+vegres
+vegres %<>% mutate(veg = fitted(vegk))
+vegres
+plot(vegres)
+vegr <- st_as_sf(vegres, coords=c("lon", "lat"))
+plot(vegr)
+vegres <- data.frame(veg=as.factor(NA), lon=st_coordinates(grid)[, 1], #
+                                lat = st_coordinates(grid)[, 2])
+vegk <- kknn(slice~., train=richdf, test=vegres,kernel="gaussian", k=5)
+vegres %<>% mutate(veg = fitted(vegk))
+vegr <- st_as_sf(vegres, coords=c("lon", "lat"))
+plot(vegr)
+plot(rich)
+plot(vegr)
+vegres <- data.frame(veg=as.factor(NA), lon=st_coordinates(grid)[, 1], #
+                                lat = st_coordinates(grid)[, 2])
+vegk <- kknn(slice~., train=richdf, test=vegres,kernel="gaussian", k=3)
+richdf <- na.omit(richdf)
+vegk <- kknn(slice~., train=richdf, test=vegres,kernel="gaussian", k=3)
+vegres %<>% mutate(veg = fitted(vegk))
+vegr <- st_as_sf(vegres, coords=c("lon", "lat"))
+plot(vegr)
+richdf
+richdf[richdf$slice=="",]
+richdf[richdf$slice=="",] <- NA
+richdf
+richdf <- na.omit(richdf)
+richdf
+vegres <- data.frame(veg=as.factor(NA), lon=st_coordinates(grid)[, 1], #
+                                lat = st_coordinates(grid)[, 2])
+vegk <- kknn(slice~., train=richdf, test=vegres,kernel="gaussian", k=2)
+vegres %<>% mutate(veg = fitted(vegk))
+vegr <- st_as_sf(vegres, coords=c("lon", "lat"))
+plot(vegr)
+vegres <- data.frame(veg=as.factor(NA), lon=st_coordinates(grid)[, 1], #
+                                lat = st_coordinates(grid)[, 2])
+vegk <- kknn(slice~., train=richdf, test=vegres,kernel="gaussian", k=1)
+vegres %<>% mutate(veg = fitted(vegk))
+vegr <- st_as_sf(vegres, coords=c("lon", "lat"))
+plot(vegr)
+class(vegr)
+rrr <- raster(vegr)
+library(raster)
+rrr <- raster(vegr)
+plot(rrr)
+rrr <- raster(vegr, "slice")
+rrr <- raster(vegr, "veg")
+vegr
+proj4string(rich)
+rrr <- rasterize(vegr, "veg")
+coordinates(vegr) <- c("lon", "lat")
+v <- as.data.frame(vegr)
+coordinates(v) <- c("lon", "lat")
+v
+v <- data.frame(veg=vegr$veg, lon=st_coordinates(vegr)[,1], lat=st_coordinates(vegr)[,2])
+v
+coordinates(v) <- ~lon+lat
+rrr <- rasterize(v)
+rrr <- raster::rasterize(v)
+r <- raster(extent(v))
+res(r) <- 1
+rrr <- raster::rasterize(v)
+rrr <- raster::rasterize(v, r)
+rrr <- raster::rasterize(v, "veg", r)
+rrr <- raster::rasterize(v, values=v$veg, r)
+v[v$veg=="forest",] <- 1
+v
+plot(v)
+v[v$veg=="forest"]
+v[v$veg=="forest",]
+v[v$veg=="open",]
+v[v$veg==open,]
+v$veg
+plot(vegr)
+plot(rich)
+plot(vegr)
+write.csv(rich, "a.csv")
+write.csv(vegr, "a.csv")
+vegr
+v <- data.frame(veg=vegr$veg, lon=st_coordinates(vegr)[,1], lat=st_coordinates(vegr)[,2])
+v
+v[v$veg=="forest",]
+v[v$veg=="forest",] <- 1
+v <- data.frame(veg=vegr$veg, lon=st_coordinates(vegr)[,1], lat=st_coordinates(vegr)[,2])
+class(v$veg)
+write.csv(v, "a.csv")
+install.packages("dplyr")
+version()
+install.packages("devtools")
+devtools
+library(devtools)
+install.packages("deldir")
+install.packages("gstat")
+library(gstat)
+install.packages("rgdal")
+install.packages("rcarbon")
+library(rcarbon)
+calCurves
+install.packages("automap")
+install.packages("fields")
+install.packages("spDates")
+library(spDates)
+load(neof)
+devtools::install_github("jgregoriods/spDates")
+install.packages("viridis")
+library(automap)
+library(raster)
+library(spacetime)
+library(gstat)
+library(rgdal)
+install.packages("rgdal")
+library(raster)
+a <- read.csv("~/Desktop/piragiba_sites.csv")
+coordinates(a) <- ~X+Y
+plot(a)
+proj4string(a) <- CRS("+proj=utm +zone=23 +datum=WGS84 +south +units=m +no_defs")
+plot(a)
+c <- spTransform(a, CRS("+init=epsg:4326"))
+plot(c)
+c
+write.csv(c, "piragiba_sites_ll.csv")
+library(rcarbon)
+A <- calibrate(540, 30, calCurves="shcal20")
+plot(A)
+summary(A)
+B <- calibrate(960, 30, calCurves="marine20", resOffsets=-54, resErrors=101)
+plot(B)
+plot(A, B)
+x <- calibrate(c(1000,9000), c(30,40))
+plot(x)
+multiplot(x)
+C <- calibrate(1280, 30, calCurves=mixCurves("intcal20", "shcal20", 0.5))
+plot(C)
+plot(B)
+plot(A)
+a <- c(12327, 17129, 19923)
+plot(a, type="b")
+a <- c(1,2,3,4,5,6)
+b <- c(10,19,35,38, 54, 59)
+plot(a,b)
+x <- lm(a,b)
+x <- lm(b~a)
+x
+summary(x)
+y <- c(1,1,1,1,0,0,0,0)
+x <- c(1000, 980, 1100, 900, 1040, 800, 900, 400, 750)
+plot(x,y)
+x <- c(1000, 980, 1100, 1040, 800, 900, 400, 750)
+plot(x, y)
+g <- glm(y~x)
+g
+summary(g)
+plot(x, y)
+lines(g)
+p <- predict(g, x)
+p <- predict(g)
+p
+plot(x,y)
+lines(p)
+plot(p)
+x
+plot(x,y)
+p <- predict(g, 100*4:11)
+g <- glm(y~x, family=binomial)
+g <- glm(y~x, family=binomial())
+g
+summary(g)
+d <- data.frame(y=y, x=x)
+d
+g <- glm(y~., family=binomial, data=d)
+d <- rbind(d, c(0, 600))
+d <- rbind(d, c(1, 1010))
+d
+d <- rbind(d, c(1, 1110))
+d <- rbind(d, c(1, 990))
+d <- rbind(d, c(0, 300))
+d
+g <- glm(y~., family=binomial, data=d)
+plot(d)
+plot(x,y)
+plot(d$x,d$y)
+g <- glm(y~x, family=binomial, data=d)
+setwd("new_abm_c/")
+setwd("./layers/veg")
+library(raster)#
+#
+get_ecotone <- function(r) {#
+  eco <- focal(r, w=matrix(1,3,3), fun=mean)#
+  eco[values(eco)==1] <- 0#
+  eco[values(eco)!=0] <- 1#
+  return(eco)#
+}
+veg1 <- raster("veg_1000.asc")
+eco1 <- get_ecotone(veg1)
+plot(eco1)
+veg1
+plot(veg1)
+a <- veg1-eco1
+plot(a)
+for(i in 1000*1:6) {#
+  veg <- raster(paste("veg_", i, ".asc", sep=""))#
+  eco <- get_ecotone(veg)#
+  writeRaster(eco, paste("eco_", i, ".asc", sep=""))#
+}
