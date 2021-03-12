@@ -7,6 +7,7 @@ Grid::Grid(Model& model) :
     population {std::vector<std::vector<int>>(NROWS, std::vector<int>(NCOLS, 0.0))},
     elevation {std::vector<std::vector<double>>(NROWS, std::vector<double>(NCOLS, 0.0))},
     vegetation {std::vector<std::vector<double>>(NROWS, std::vector<double>(NCOLS, 0.0))},
+    ecotone {std::vector<std::vector<int>>(NROWS, std::vector<int>(NCOLS, 0.0))},
     arrival_time {std::vector<std::vector<int>>(NROWS, std::vector<int>(NCOLS, 0))},
     mt {static_cast<unsigned int>(time(NULL))},
     model {&model} {
