@@ -17,7 +17,7 @@ Grid::Grid(Model& model) :
     int dist = model.get_leap_dist() / (CELL_SIZE / 1000);
     for (int i {-dist}; i <= dist; ++i)
         for (int j {-dist}; j <= dist; ++j) {
-            if (get_distance(std::make_pair(0, 0), std::make_pair(i, j)) == dist)
+            if (get_distance(std::make_pair(0, 0), std::make_pair(i, j)) <= dist)
                 leap_mask.push_back(std::make_pair(i, j));
     }
 
@@ -88,6 +88,10 @@ double Grid::get_vegetation(std::pair<int, int> cell) {
     return vegetation[cell.second][cell.first];
 }
 
+bool Grid::is_ecotone(std::pair<int, int> cell) {
+    return ecotone[cell.second][cell.first] == 1;
+}
+
 void Grid::set_population(std::pair<int, int> cell, int new_population) {
     population[cell.second][cell.first] = new_population;
 }
@@ -103,15 +107,15 @@ void Grid::set_arrival_time(std::pair<int, int> cell, int arrival_date) {
 * @param time_step The interpolated time step to update from.
 */
 void Grid::update(int time_step) {
-    std::string filename {"layers/veg/veg_" + std::to_string(time_step) + ".asc"};
-    std::ifstream file(filename);
-    if (file.is_open()) {
+    std::string veg_filename {"layers/veg/veg_" + std::to_string(time_step) + ".asc"};
+    std::ifstream veg_file(veg_filename);
+    if (veg_file.is_open()) {
         std::string line;
         // The asc file has a header of 6 lines which must be skipped
         for (int i {0}; i < 6; ++i)
-            std::getline(file, line);
+            std::getline(veg_file, line);
         int row {0};
-        while (std::getline(file, line)) {
+        while (std::getline(veg_file, line)) {
             int col {0};
             std::stringstream split(line);
             double value;
@@ -119,7 +123,26 @@ void Grid::update(int time_step) {
                 vegetation[row][col++] = value;
             ++row;
         }
-        file.close();
+        veg_file.close();
+    }
+
+    std::string eco_filename {"layers/veg/eco_" + std::to_string(time_step) + ".asc"};
+    std::ifstream eco_file(eco_filename);
+    if (eco_file.is_open()) {
+        std::string line;
+        // The asc file has a header of 6 lines which must be skipped
+        for (int i {0}; i < 6; ++i)
+            std::getline(eco_file, line);
+        int row {0};
+        while (std::getline(eco_file, line)) {
+            int col {0};
+            std::stringstream split(line);
+            int value;
+            while (split >> value)
+                ecotone[row][col++] = value;
+            ++row;
+        }
+        eco_file.close();
     }
 }
 

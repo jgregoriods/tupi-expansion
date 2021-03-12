@@ -12,7 +12,7 @@ int main(const int argc, const char* argv[]) {
                   << std::endl;
         return 1;
     }
-    
+
     int start_date = std::stoi(argv[1]);
     int start_x = std::stoi(argv[2]);
     int start_y = std::stoi(argv[3]);
@@ -30,6 +30,7 @@ int main(const int argc, const char* argv[]) {
         model.write();
 
     model.get_dates();
+    model.score();
 
     return 0;
 }

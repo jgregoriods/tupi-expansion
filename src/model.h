@@ -9,7 +9,8 @@ struct Site {
     std::string name {};
     double x {};
     double y {};
-    int date {};
+    int med_cal {};
+    int sim_date {};
 };
 
 class Grid;
@@ -29,6 +30,7 @@ class Model {
         double get_forest_threshold();
         double get_fission_threshold();
         void get_dates();
+        void score();
         void write_snapshot(); // remove later
 
     private:

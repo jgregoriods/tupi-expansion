@@ -27,7 +27,7 @@ Model::Model(int start_date, int start_x, int start_y, double k, double r,
     grid {nullptr} {
         grid = new Grid(*this);
         settled_cells.reserve(NCOLS * NROWS);
-        grid->update(start_date);
+        grid->update(ceil((double)start_date / 1000.0) * 1000);
         init_pop(start_x, start_y);
 }
 
@@ -81,7 +81,7 @@ void Model::fission() {
 
             auto neighbors = grid->get_neighbors(settled_cells[i]);
 
-            if (neighbors.size() == 0 && leap_distance > 0)
+            if (neighbors.size() == 0 && leap_distance > 0 && (grid->is_ecotone(settled_cells[i]) || grid->get_vegetation(settled_cells[i]) < 1))
                 neighbors = grid->get_leap_cells(settled_cells[i]);
 
             if (neighbors.size() > 0) {
@@ -131,7 +131,7 @@ void Model::write() {
 */
 void Model::run(int num_steps) {
     for (int i {0}; i < num_steps; ++i) {
-        //write_snapshot();
+        write_snapshot();
         // The environment is updated every 100 years.
         if (date % 1000 == 0)
             grid->update(date);
@@ -167,23 +167,33 @@ void Model::get_dates() {
             std::string name {};
             double x {};
             double y {};
+            int med_cal {};
             std::stringstream split(line);
-            split >> name >> x >> y;
+            split >> name >> x >> y >> med_cal;
             auto coords = grid->to_grid(x, y);
-            int date = grid->get_arrival_time(coords);
+            int sim_date = grid->get_arrival_time(coords);
             // Even if the population has not reached a specific cell, it is
             // possible that one of the immediate neighbors has been settled.
-            if (!date)
-                for (int i {-1}; i <= 1 && !date; ++i)
-                    for (int j {-1}; j <= 1 && !date; ++j)
-                        date = grid->get_arrival_time(std::make_pair(coords.first+i, coords.second+j));
-            Site site {name, x, y, date};
+            if (!sim_date)
+                for (int i {-2}; i <= 2 && !sim_date; ++i)
+                    for (int j {-2}; j <= 2 && !sim_date; ++j)
+                        sim_date = grid->get_arrival_time(std::make_pair(coords.first+i, coords.second+j));
+            Site site {name, x, y, med_cal, sim_date};
             sites.push_back(site);
         }
     }
     file.close();
     for (auto site: sites)
-        std::cout << site.name << " " << site.date << std::endl;
+        std::cout << site.name << " " << site.sim_date << std::endl;
+}
+
+void Model::score() {
+    double mean_error {};
+    for (auto site: sites) {
+        mean_error += abs(site.sim_date - site.med_cal);
+    }
+    mean_error /= sites.size();
+    std::cout << mean_error << std::endl;
 }
 
 // remove

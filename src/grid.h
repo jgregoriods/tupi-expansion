@@ -47,6 +47,7 @@ class Grid {
         int get_distance(std::pair<int, int> cell_a, std::pair<int, int> cell_b);
         std::vector<std::pair<int, int>> get_leap_cells(std::pair<int, int> cell);
         std::pair<int, int> get_rnd_cell(std::vector<std::pair<int, int>> cells);
+        bool is_ecotone(std::pair<int, int> cell);
 };
 
 #endif
