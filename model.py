@@ -25,7 +25,7 @@ def to_grid(x, y):
 
 class Model:
     def __init__(self):
-        self.date = 6000
+        self.date = 4000
         self.grid = {}
         self.settled_cells = []
         self.setup_layers()
@@ -75,12 +75,21 @@ class Model:
             new_cell = (x+i, y+j)
             # if (new_cell != (0, 0) and new_cell in self.grid and
             if (new_cell in self.grid and
+                    #self.grid[new_cell]['vegetation'] and
                     self.grid[new_cell]['elevation'] > 0 and
                     self.grid[new_cell]['population'] < phi * K):
                 neighbor_cells.append(new_cell)
         return neighbor_cells
 
+    def update(self):
+        if not self.date % 1000:
+            vegetation = np.loadtxt(f'layers/veg/veg_{self.date}.asc',
+                                    skiprows=6)
+            for cell in self.grid:
+                self.grid[cell]['vegetation'] = vegetation[cell[1]][cell[0]]
+
     def run(self):
+        self.update()
         self.grow_population()
         self.disperse_population()
         self.date -= 1
@@ -88,7 +97,7 @@ class Model:
 
 if __name__ == '__main__':
     m = Model()
-    for i in tqdm(range(3000)):
+    for i in tqdm(range(3500)):
         m.run()
     p = np.zeros((165, 128))
     for row in range(165):
