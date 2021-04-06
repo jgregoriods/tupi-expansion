@@ -2,10 +2,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pyproj
+import seaborn as sns
 
 from tqdm import tqdm
 
 
+sns.set()
 albers = pyproj.Proj("+proj=aea +lat_1=-5 +lat_2=-42 +lat_0=-32 +lon_0=-60 \
                       +x_0=0 +y_0=0 +ellps=aust_SA +towgs84=-57,1,-41,0,0,0,0 \
                       +units=m +no_defs")
@@ -51,7 +53,7 @@ class Model:
         self.grid[start_coords]['population'] = self.K * self.C
         self.grid[start_coords]['arrival_time'] = self.date
         self.settled_cells.append(start_coords)
-
+  
     def grow_population(self):
         for cell in self.settled_cells.copy():
             N = self.grid[cell]['population']
@@ -74,20 +76,17 @@ class Model:
     def get_neighbor_cells(self, cell):
         x, y = cell
         neighbor_cells = []
-        # for i in range(-1, 2):
-        #    for j in range(-1, 2):
         for (i, j) in mask:
             new_cell = (x+i, y+j)
-            # if (new_cell != (0, 0) and new_cell in self.grid and
             if (new_cell in self.grid and
-                    self.grid[new_cell]['vegetation'] >= self.forest and
-                    self.grid[new_cell]['elevation'] > 0 and
+                    #self.grid[new_cell]['vegetation'] >= self.forest and
+                    0 < self.grid[new_cell]['elevation'] < 1000 and
                     self.grid[new_cell]['population'] < self.C * self.K):
                 neighbor_cells.append(new_cell)
         return neighbor_cells
 
     def update(self):
-        if not self.date % 1000:
+        if self.forest and not self.date % 1000:
             vegetation = np.loadtxt(f'layers/veg/veg_{self.date}.asc',
                                     skiprows=6)
             for cell in self.grid:
@@ -96,7 +95,12 @@ class Model:
     def score(self, filename):
         dates = pd.read_csv(filename)
         coords = list(zip(dates['x'], dates['y']))
+        real_ages = dates['bp']
+        dists = dates['dist']
         sim_dates = [self.grid[to_grid(coord)]['arrival_time'] for coord in coords]
+        plt.scatter(dists, real_ages)
+        plt.scatter(dists, sim_dates)
+        plt.show()
         return sim_dates
 
     def run(self, num_iter):
@@ -108,8 +112,8 @@ class Model:
 
 
 if __name__ == '__main__':
-    m = Model(5000, (-61.96, -10.96), 0.02, 1, 0.75, 0)
-    m.run(4500)
+    m = Model(5000, (-61.96, -10.96), 0.04, 1, 0.75, 1)
+    m.run(2000)
     p = np.zeros((165, 128))
     for row in range(165):
         for col in range(128):
@@ -117,6 +121,7 @@ if __name__ == '__main__':
     p[p == 0] = np.nan
     plt.imshow(p)
     plt.show()
+    print(m.score('tupi_filtered.csv'))
     """f = open('arr.asc', 'w')
     np.savetxt(f, p)
     f.close()"""

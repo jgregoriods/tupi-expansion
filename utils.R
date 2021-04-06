@@ -25,7 +25,7 @@ cal.dates <- calibrate(tupi$C14Age, tupi$C14SD, calCurves=tupi$calCurves,
                        resOffsets=tupi$resOffsets, resErrors=tupi$resErrors)
 tupi$bp <- medCal(cal.dates)
 
-tupi.f <- filterDates(tupi, 100)
+tupi.f <- filterDates(tupi, 0)
 tupi.f$dist <- getDist(tupi.f, tupi.f[1,])
 tupi.df <- data.frame(x=tupi.f$Longitude, y=tupi.f$Latitude, bp=tupi.f$bp, dist=tupi.f$dist)
 write.csv(tupi.df, "tupi_filtered.csv")
