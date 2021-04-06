@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import pyproj
 
 from tqdm import tqdm
@@ -92,6 +93,12 @@ class Model:
             for cell in self.grid:
                 self.grid[cell]['vegetation'] = vegetation[cell[1]][cell[0]]
 
+    def score(self, filename):
+        dates = pd.read_csv(filename)
+        coords = list(zip(dates['x'], dates['y']))
+        sim_dates = [self.grid[to_grid(coord)]['arrival_time'] for coord in coords]
+        return sim_dates
+
     def run(self, num_iter):
         for i in tqdm(range(num_iter)):
             self.update()
@@ -101,8 +108,8 @@ class Model:
 
 
 if __name__ == '__main__':
-    m = Model(5000, (-61.96, -10.96), 0.05, 1, 0.75, 1)
-    m.run(2000)
+    m = Model(5000, (-61.96, -10.96), 0.02, 1, 0.75, 0)
+    m.run(4500)
     p = np.zeros((165, 128))
     for row in range(165):
         for col in range(128):
