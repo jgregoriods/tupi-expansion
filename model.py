@@ -47,7 +47,8 @@ class Model:
 
     def setup_layers(self):
         elevation = np.loadtxt('layers/ele.asc', skiprows=6)
-        vegetation = np.loadtxt('layers/veg/veg_6000.asc', skiprows=6)
+        start_date = int(np.ceil(5900/1000) * 1000)
+        vegetation = np.loadtxt(f'layers/veg/veg_{start_date}.asc', skiprows=6)
         for row in range(165):
             for col in range(128):
                 self.grid[(col, row)] = {'elevation': elevation[row, col],
@@ -58,14 +59,13 @@ class Model:
     def setup_population(self):
         start_coords = to_grid(self.start_coords)
         # start at fission threshold
-        self.grid[start_coords]['population'] = 100#self.K * self.C
+        self.grid[start_coords]['population'] = self.K * self.C
         self.grid[start_coords]['arrival_time'] = self.date
         self.settled_cells.append(start_coords)
 
     def grow_population(self):
         for cell in self.settled_cells.copy():
             N = self.grid[cell]['population']
-            #self.grid[cell]['population'] += self.r * ((self.K-N)/self.K) * N
             self.grid[cell]['population'] += self.r * (1 - (N / self.K)) * N
 
     def disperse_population(self):
@@ -73,6 +73,7 @@ class Model:
             N = self.grid[cell]['population']
             if N / self.K > self.C:
                 migrants = N * (1 - (self.C / (N / self.K)))
+                #migrants = N * 0.1 * (N / self.K)
                 neighbor_cells = self.get_neighbor_cells(cell)
                 if neighbor_cells:
                     chosen_cell = neighbor_cells[np.random.choice(list(range(len(neighbor_cells))))]
@@ -139,8 +140,8 @@ class Model:
 
 
 if __name__ == '__main__':
-    m = Model(5000, (-61.96, -10.96), 0.03, 1, 0.75, 1)
-    m.run(4500)
+    m = Model(5000, (-61.96, -10.96), 0.02, 1, 0.5, 0)
+    m.run(2000)
     p = np.zeros((165, 128))
     for row in range(165):
         for col in range(128):
