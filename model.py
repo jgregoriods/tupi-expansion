@@ -10,15 +10,22 @@ from tqdm import tqdm
 
 sns.set()
 albers = pyproj.Proj("+proj=aea +lat_1=-5 +lat_2=-42 +lat_0=-32 +lon_0=-60 \
-                      +x_0=0 +y_0=0 +ellps=aust_SA +towgs84=-57,1,-41,0,0,0,0 \
-                      +units=m +no_defs")
-CELL_AREA = 2500
-HEADER = '\n'.join([' '.join(x) for x in np.loadtxt('layers/ele.asc', dtype='U',
-                                                    max_rows=6)])
+                      +x_0=0 +y_0=0 +ellps=aust_SA +units=m +no_defs")
+
+header_info = np.loadtxt('layers/ele.asc', dtype='U', max_rows=6)
+NCOLS = int(header_info[0][1])
+NROWS = int(header_info[1][1])
+CELL_SIZE = int(header_info[4][1])
+XMIN = float(header_info[2][1])
+YMAX = XMIN + (NROWS * CELL_SIZE)
+CELL_AREA = (CELL_SIZE // 1000)**2
+
+HEADER = '\n'.join([' '.join(x) for x in header_info])
 SITES = pd.read_csv('tupi.csv')
 
 STEP = 30
 K = 1
+GAMMA = 1
 
 
 def get_distance(a, b):
@@ -27,8 +34,9 @@ def get_distance(a, b):
 
 def to_grid(cell):
     x, y = cell
-    x_grid = int((albers(x, y)[0] + 2985163.8955) / 50000)
-    y_grid = int((5227968.786 - albers(x, y)[1]) / 50000)
+    x_grid = (albers(x, y)[0] - XMIN) // CELL_SIZE
+    # there is an offset of about 1 degree in the latitude when converting
+    y_grid = (YMAX - albers(x, y+1)[1]) // CELL_SIZE
     return x_grid, y_grid
 
 """
@@ -37,10 +45,12 @@ mask = [(-1,-1), (0,-1), (1,-1),
         (-1, 1), (0, 1), (1, 1)]
 """
 
-mask = [(0,-1), (-1, 0), (1, 0), (0, 1)]
+#mask = [(0,-1), (-1, 0), (1, 0), (0, 1)]
+mask = [(i, j) for i in range(-2, 3) for j in range(-2, 3)
+        if (i, j) != (0, 0) and round(get_distance((0, 0), (i, j))) <= 2]
 
-leap_mask = [(i, j) for i in range(-6, 7) for j in range(-6, 7)
-             if (i, j) != (0, 0) and round(get_distance((0, 0), (i, j))) <= 6]
+leap_mask = [(i, j) for i in range(-7, 8) for j in range(-7, 8)
+             if (i, j) != (0, 0) and round(get_distance((0, 0), (i, j))) <= 8]
 
 
 class Model:
@@ -61,10 +71,10 @@ class Model:
 
     def setup_layers(self):
         elevation = np.loadtxt('layers/ele.asc', skiprows=6)
-        vegetation = np.loadtxt(f'layers/veg/veg2_{self.time_slice}000.asc',
+        vegetation = np.loadtxt(f'layers/veg/veg_{self.time_slice}000.asc',
                                 skiprows=6)
-        for row in range(165):
-            for col in range(128):
+        for row in range(NROWS):
+            for col in range(NCOLS):
                 self.grid[(col, row)] = {'elevation': elevation[row, col],
                                          'population': 0,
                                          'vegetation': vegetation[row, col],
@@ -90,7 +100,7 @@ class Model:
 
     def disperse_population(self, cell):
         N = self.grid[cell]['population']
-        migrants = round(N * self.e_K * (N / self.K))
+        migrants = round(N * self.e_K * (N / self.K)**GAMMA)
         if migrants:
             neighbor_cells = self.get_neighbor_cells(cell)
             if neighbor_cells:
@@ -113,32 +123,6 @@ class Model:
                             if not self.grid[l_cell]['arrival_time']:
                                 self.grid[l_cell]['arrival_time'] = self.date
                                 self.settled_cells.append(l_cell)
-        """
-        if N / self.K > self.C:
-            migrants = (1 - (self.C / (N / self.K))) * N
-            chosen_cell = None
-            neighbor_cells = self.get_neighbor_cells(cell)
-            if neighbor_cells:
-                #chosen_cell = neighbor_cells[np.random.choice(list(range(len(neighbor_cells))))]
-                self.grid[cell]['population'] -= migrants
-                migrants_per_cell = migrants / len(neighbor_cells)
-                for n_cell in neighbor_cells:
-                    self.grid[n_cell]['population'] += migrants_per_cell
-                    if not self.grid[n_cell]['arrival_time']:
-                        self.grid[n_cell]['arrival_time'] = self.date
-                        self.settled_cells.append(n_cell)
-
-            elif self.forest and self.grid[cell]['vegetation'] == 2:
-                leap_cells = self.get_leap_cells(cell)
-                if leap_cells:
-                    chosen_cell = leap_cells[np.random.choice(list(range(len(leap_cells))))]
-            if chosen_cell is not None:
-                if self.grid[chosen_cell]['population'] == 0:
-                    self.settled_cells.append(chosen_cell)
-                    self.grid[chosen_cell]['arrival_time'] = self.date
-                self.grid[cell]['population'] -= migrants
-                self.grid[chosen_cell]['population'] += migrants
-            """
 
     def get_leap_cells(self, cell):
         leap_cells = []
@@ -166,7 +150,7 @@ class Model:
         #if self.forest and not self.date % 1000:
         if self.forest and np.ceil(self.date / 1000) != self.time_slice:
             self.time_slice = int(np.ceil(self.date / 1000))
-            vegetation = np.loadtxt(f'layers/veg/veg2_{self.time_slice}000.asc',
+            vegetation = np.loadtxt(f'layers/veg/veg_{self.time_slice}000.asc',
                                     skiprows=6)
             for cell in self.grid:
                 self.grid[cell]['vegetation'] = vegetation[cell[1]][cell[0]]
@@ -197,12 +181,11 @@ class Model:
                 self.grow_population(cell)
                 self.disperse_population(cell)
                 self.check_env(cell)
-            #self.date -= 1
             self.date -= STEP
             if not i % intervals:
-                p = np.zeros((165, 128))
-                for row in range(165):
-                    for col in range(128):
+                p = np.zeros((NROWS, NCOLS))
+                for row in range(NROWS):
+                    for col in range(NCOLS):
                         p[row][col] = m.grid[(col, row)]['arrival_time']
                 p[p == 0] = np.nan
                 plt.imshow(p)
@@ -210,7 +193,7 @@ class Model:
                 plt.show()
 
     def write(self):
-        p = np.zeros((165, 128))
+        p = np.zeros((NROWS, NCOLS))
         for cell in self.grid:
             p[cell[1]][cell[0]] = m.grid[cell]['arrival_time']
         p[p==0] = -9999
@@ -220,7 +203,7 @@ class Model:
 if __name__ == '__main__':
     start_date = 5800
     start_coords = (-61.96, -10.96)
-    m = Model(start_date, start_coords, 0.028, 0.25, 1)
+    m = Model(start_date, start_coords, 0.028, 0.2, 1)
     num_gen = (start_date - 500) // STEP
     m.run(num_gen)
     m.score(SITES)
