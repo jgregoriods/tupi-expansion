@@ -8,7 +8,7 @@ wgs <- CRS("+init=epsg:4326")
 gmted <- raster("rasters/gmted.tif")
 sam <- readOGR("shp/south_america.shp")
 ele <- crop(gmted, sam)
-ele.m <- projectRaster(ele, crs=albers, res=25000)
+ele.m <- projectRaster(ele, crs=albers, res=50000)
 writeRaster(ele.m, "ele.asc")
 
 gc()
