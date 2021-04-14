@@ -5,10 +5,12 @@ import pyproj
 import seaborn as sns
 import statsmodels.formula.api as smf
 
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 from tqdm import tqdm
 
 
 sns.set()
+
 albers = pyproj.Proj("+proj=aea +lat_1=-5 +lat_2=-42 +lat_0=-32 +lon_0=-60 \
                       +x_0=0 +y_0=0 +ellps=aust_SA +units=m +no_defs")
 
@@ -17,8 +19,12 @@ NCOLS = int(header_info[0][1])
 NROWS = int(header_info[1][1])
 CELL_SIZE = int(header_info[4][1])
 XMIN = float(header_info[2][1])
+XMAX = XMIN + (NCOLS * CELL_SIZE)
+YMIN = float(header_info[3][1])
 YMAX = XMIN + ((NROWS - 1) * CELL_SIZE)
 CELL_AREA = (CELL_SIZE // 1000)**2
+
+EXTENT = [XMIN, XMAX, YMIN, YMAX]
 
 HEADER = '\n'.join([' '.join(x) for x in header_info])
 SITES = pd.read_csv('tupi.csv')
@@ -39,14 +45,10 @@ def to_grid(cell):
     y_grid = (YMAX - albers(x, y+1)[1]) // CELL_SIZE
     return x_grid, y_grid
 
+
 mask = [(-1,-1), (0,-1), (1,-1),
         (-1, 0),         (1, 0),
         (-1, 1), (0, 1), (1, 1)]
-
-#mask = [(0,-1), (-1, 0), (1, 0), (0, 1)]
-
-"""mask = [(i, j) for i in range(-2, 3) for j in range(-2, 3)
-        if (i, j) != (0, 0) and np.ceil(get_distance((0, 0), (i, j))) <= 2]"""
 
 dist = int(LEAP_DISTANCE / (CELL_SIZE / 1000))
 leap_mask = [(i, j) for i in range(-dist, dist + 1)
@@ -85,15 +87,9 @@ class Model:
     def setup_population(self):
         start_coords = to_grid(self.start_coords)
         # start at fission threshold
-        self.grid[start_coords]['population'] = self.K#self.K * self.C
+        self.grid[start_coords]['population'] = self.K
         self.grid[start_coords]['arrival_time'] = self.date
         self.settled_cells.append(start_coords)
-
-    """
-    def grow_population(self, cell):
-        N = self.grid[cell]['population']
-        self.grid[cell]['population'] += self.r * (1 - (N / self.K)) * N
-    """
 
     def grow_population(self, cell):
         N = self.grid[cell]['population']
@@ -146,7 +142,6 @@ class Model:
         return neighbor_cells
 
     def update(self):
-        #if self.forest and not self.date % 1000:
         if self.forest and np.ceil(self.date / 1000) != self.time_slice:
             self.time_slice = int(np.ceil(self.date / 1000))
             vegetation = np.loadtxt(f'layers/veg/veg_{self.time_slice}000.asc',
@@ -156,18 +151,9 @@ class Model:
 
     def score(self, sites):
         coords = list(zip(sites['x'], sites['y']))
-        """sites['sim_dates'] = [self.grid[to_grid(coord)]['arrival_time']
-                              for coord in coords]
-        mod = smf.quantreg('bp ~ dist', data=sites)
-        res = mod.fit(q = 0.95)
-        line = res.predict(sites['dist'])
-        plt.scatter(sites['dist'], sites['bp'])
-        plt.plot(sites['dist'], line)
-        plt.scatter(sites['dist'][sites['sim_dates'] != 0],
-                    sites['sim_dates'][sites['sim_dates'] != 0])
-        plt.show()"""
         sites_copy = sites.copy()
-        sites_copy['sim_dates'] = [self.grid[to_grid(coord)]['arrival_time'] for coord in coords]
+        sites_copy['sim_dates'] = [self.grid[to_grid(coord)]['arrival_time']
+                                   for coord in coords]
         return sites_copy
 
     def check_env(self, cell):
@@ -176,7 +162,8 @@ class Model:
             self.settled_cells.remove(cell)
 
     def run(self, num_iter):
-        intervals = num_iter // 5
+        slices = []
+        intervals = num_iter // 6
         for i in tqdm(range(num_iter)):
             self.update()
             for cell in self.settled_cells.copy():
@@ -184,17 +171,13 @@ class Model:
                 self.disperse_population(cell)
                 self.check_env(cell)
             self.date -= STEP
-            """
             if not i % intervals:
                 p = np.zeros((NROWS, NCOLS))
-                for row in range(NROWS):
-                    for col in range(NCOLS):
-                        p[row][col] = self.grid[(col, row)]['population'] > 0
-                p[p == 0] = np.nan
-                plt.imshow(p)
-                plt.title(self.date)
-                plt.show()
-            """
+                for cell in self.grid:
+                    p[cell[1]][cell[0]] = self.grid[cell]['population'] > 0
+                p[p==0] = np.nan
+                slices.append((p, self.date))
+        return slices
 
     def write(self, filename=None):
         p = np.zeros((NROWS, NCOLS))
@@ -213,26 +196,69 @@ if __name__ == '__main__':
     start_coords = (-61.96, -10.96)
     num_gen = (start_date - 500) // STEP
 
+    scores = []
+    maps = []
+
     m1 = Model(start_date, start_coords, 0.03, 0.2, 0)
-    m1.run(num_gen)
-    score1 = m1.score(SITES)
-    map1 = m1.write()
+    slices1 = m1.run(num_gen)
+    scores.append(m1.score(SITES))
+    maps.append(m1.write())
 
     m2 = Model(start_date, start_coords, 0.03, 0.2, 1)
-    m2.run(num_gen)
-    score2 = m2.score(SITES)
-    map2 = m2.write()
+    slices2 = m2.run(num_gen)
+    scores.append(m2.score(SITES))
+    maps.append(m2.write())
 
-    """fig, (ax1, ax2) = plt.subplots(1, 2)
-    ax1.scatter(SITES['dist'], SITES['bp'])
-    ax1.scatter(score1['dist'][score1['sim_dates'] != 0], score1['sim_dates'][score1['sim_dates'] != 0])
-    ax2.scatter(SITES['dist'], SITES['bp'])
-    ax2.scatter(score2['dist'][score2['sim_dates'] != 0], score2['sim_dates'][score2['sim_dates'] != 0])
-    plt.show()"""
+    ele = np.loadtxt('layers/ele.asc', skiprows=6)
+    ele[ele < 1] = np.nan
+    ele[ele >= 1] = 1
 
-    fig, (ax1, ax2) = plt.subplots(1, 2)
-    ax1.imshow(map1)
-    ax1.contour(map1, levels=np.arange(500,6000,500), colors='white', linewidths=0.2)
-    ax2.imshow(map2)
-    ax2.contour(map2, levels=np.arange(500,6000,500), colors='white', linewidths=0.2)
-    plt.show()
+    fig, axes = plt.subplots(2, 3)
+    for slice, ax in zip(slices1, axes.flat):
+        map, date = slice
+        ax.imshow(ele, cmap='gray_r')
+        ax.imshow(map, cmap='coolwarm')
+        ax.set_title(f'{date} BP')
+        ax.xaxis.set_ticklabels([])
+        ax.yaxis.set_ticklabels([])
+    fig.set_size_inches(6, 6)
+    fig.tight_layout()
+    plt.savefig('slices.jpeg', dpi=300)
+
+    fig, axes = plt.subplots(2, 3)
+    for slice, ax in zip(slices2, axes.flat):
+        map, date = slice
+        ax.imshow(ele, cmap='gray_r')
+        ax.imshow(map, cmap='coolwarm_r')
+        ax.set_title(f'{date} BP')
+        ax.xaxis.set_ticklabels([])
+        ax.yaxis.set_ticklabels([])
+    fig.set_size_inches(6, 6)
+    fig.tight_layout()
+    plt.savefig('slices_veg.jpeg', dpi=300)
+
+    fig, axes = plt.subplots(1, 2)
+    for score, ax, c in zip(scores, axes.flat, ['darkred', 'mediumblue']):
+        ax.scatter(SITES['dist'], SITES['bp'], c='darkgray')
+        ax.scatter(score['dist'][score['sim_dates'] != 0],
+                   score['sim_dates'][score['sim_dates'] != 0],
+                   c=c)
+        ax.set_xlabel('distance (km)')
+        ax.set_ylabel('age (cal BP)')
+    fig.set_size_inches(12, 6)
+    fig.tight_layout()
+    plt.savefig('plots.jpeg', dpi=300)
+
+    fig, axes = plt.subplots(1, 2)
+    for map, ax in zip(maps, axes.flat):
+        ax.imshow(ele, cmap='gray_r')
+        im = ax.imshow(map, vmin=500, vmax=start_date, cmap='viridis')
+        ax.xaxis.set_ticklabels([])
+        ax.yaxis.set_ticklabels([])
+    plt.axis('equal')
+    divider = make_axes_locatable(ax)
+    cbar = fig.colorbar(im,  ax=axes.ravel().tolist(), orientation='vertical',
+                        fraction=0.046, pad=0.04)
+    cbar.set_label('sim BP')
+    fig.set_size_inches(12, 6)
+    plt.savefig('maps.jpeg', dpi=300, bbox_inches='tight')
