@@ -13,9 +13,9 @@ ele[ele < 1] = np.nan
 ele[ele >= 1] = 1
 
 
-def plot_graphs(scores):
+def plot_graphs(scores, filepath=None):
     fig, axes = plt.subplots(1, 2)
-    for score, ax, c in zip(scores, axes.flat, ['mediumblue', 'darkred']):
+    for score, ax, c in zip(scores, axes.flat, ['#0449e1', '#c00000']):
         ax.scatter(SITES['dist'], SITES['bp'], c='darkgray')
         ax.scatter(score['dist'][score['sim_dates'] != 0],
                    score['sim_dates'][score['sim_dates'] != 0],
@@ -24,15 +24,19 @@ def plot_graphs(scores):
         ax.set_ylabel('age (cal BP)')
     fig.set_size_inches(12, 6)
     fig.tight_layout()
-    plt.savefig('img/plots.jpeg', dpi=300)
+    if filepath is not None:
+        plt.savefig('img/plots.jpeg', dpi=300)
+    else:
+        plt.show()
 
 
-def plot_time_slices(slices):
+def plot_time_slices(slices, filepath=None):
     num_slices = len(slices) // 2
     fig, axes = plt.subplots(2, num_slices)
     colors = ['coolwarm'] * num_slices + ['coolwarm_r'] * num_slices
     for sl, ax, c in zip(slices, axes.flat, colors):
         mp, date = sl
+        ax.grid(False)
         ax.imshow(ele, cmap='gray_r')
         ax.imshow(mp, cmap=c)
         ax.set_title(f'{date} BP')
@@ -40,12 +44,16 @@ def plot_time_slices(slices):
         ax.yaxis.set_ticklabels([])
     fig.set_size_inches(12, 6)
     fig.tight_layout()
-    plt.savefig('img/slices.jpeg', dpi=300)
+    if filepath is not None:
+        plt.savefig(filepath, dpi=300)
+    else:
+        plt.show()
 
 
-def plot_maps(maps, filename=None):
+def plot_maps(maps, filepath=None):
     fig, axes = plt.subplots(1, 2)
     for mp, ax in zip(maps, axes.flat):
+        ax.grid(False)
         ax.imshow(ele, cmap='gray_r')
         im = ax.imshow(mp, cmap='viridis')
         ax.xaxis.set_ticklabels([])
@@ -56,7 +64,10 @@ def plot_maps(maps, filename=None):
                         fraction=0.046, pad=0.04)
     cbar.set_label('sim BP')
     fig.set_size_inches(12, 6)
-    plt.savefig('img/maps.jpeg', dpi=300, bbox_inches='tight')
+    if filepath is not None:
+        plt.savefig(filepath, dpi=300, bbox_inches='tight')
+    else:
+        plt.show()
 
 
 def test_model(params):
@@ -76,9 +87,9 @@ def test_model(params):
 
 
 def main():
-    params = {'start_date': 5800,
+    params = {'start_date': 5000,
               'start_coords': (-61.96, -10.96),
-              'r': 0.025,
+              'r': 0.028,
               'e_K': 0.25}
 
     time_slices, maps, scores = test_model(params)
