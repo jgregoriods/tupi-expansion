@@ -17,7 +17,7 @@ getDist <- function(sites, origin) {
     return(dists)
 }
 
-tupi <- read.csv("tupi_all.csv")
+tupi <- read.csv("sites/tupi_all.csv")
 coordinates(tupi) <- ~Longitude+Latitude
 proj4string(tupi) <- CRS("+init=epsg:4326")
 

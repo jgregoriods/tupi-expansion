@@ -61,6 +61,11 @@ class Model:
         self.setup_layers()
         self.setup_population()
 
+        self.score = None
+        self.sites = None
+        self.slices = None
+        self.arrival_times = None
+
     def setup_layers(self):
         elevation = np.loadtxt('layers/ele.asc', skiprows=6)
         vegetation = np.loadtxt(f'layers/veg/veg_{self.time_slice}000.asc',
@@ -137,12 +142,12 @@ class Model:
             for cell in self.grid:
                 self.grid[cell]['vegetation'] = vegetation[cell[1]][cell[0]]
 
-    def score(self, sites):
+    def get_score(self, sites):
         coords = list(zip(sites['x'], sites['y']))
-        sites_copy = sites.copy()
-        sites_copy['sim_dates'] = [self.grid[to_grid(coord)]['arrival_time']
+        self.sites = sites.copy()
+        self.sites['sim_dates'] = [self.grid[to_grid(coord)]['arrival_time']
                                    for coord in coords]
-        return sites_copy
+        self.score = np.sqrt(np.mean((self.sites['bp'] - self.sites['sim_dates'])**2))
 
     def check_env(self, cell):
         if self.forest and self.grid[cell]['vegetation'] < self.forest:
@@ -150,7 +155,7 @@ class Model:
             self.settled_cells.remove(cell)
 
     def run(self, num_iter):
-        slices = []
+        self.slices = []
         intervals = num_iter // 5
         for i in tqdm(range(num_iter)):
             self.update()
@@ -164,16 +169,13 @@ class Model:
                 for cell in self.grid:
                     p[cell[1]][cell[0]] = self.grid[cell]['population'] > 0
                 p[p==0] = np.nan
-                slices.append((p, self.date))
-        return slices
-
-    def write(self, filename=None):
-        p = np.zeros((NROWS, NCOLS))
+                self.slices.append((p, self.date))
+        self.arrival_times = np.zeros((NROWS, NCOLS))
         for cell in self.grid:
-            p[cell[1]][cell[0]] = self.grid[cell]['arrival_time']
-        if filename is not None:
+            self.arrival_times[cell[1]][cell[0]] = self.grid[cell]['arrival_time']
+
+    def write(self, filename):
+        if self.arrival_times is not None:
+            p = self.arrival_times.copy()
             p[p==0] = -9999
             np.savetxt(filename, p, header=HEADER, comments='')
-        else:
-            p[p==0] = np.nan
-            return p
