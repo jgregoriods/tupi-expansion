@@ -91,8 +91,10 @@ class Model:
 
     def disperse_population(self, cell):
         N = self.grid[cell]['population']
-        migrants = round(N * self.e_K * (N / self.K)**GAMMA)
-        if migrants:
+        if self.e_K < N / self.K:
+        #migrants = round(N * self.e_K * (N / self.K)**GAMMA)
+        #if migrants:
+            migrants = round(N * (1 - (self.e_K / (N / self.K))))
             neighbor_cells = self.get_neighbor_cells(cell)
             if neighbor_cells:
                 self.move(cell, neighbor_cells, migrants)
@@ -118,7 +120,7 @@ class Model:
             new_cell = (cell[0]+i, cell[1]+j)
             if (new_cell in self.grid and
                     self.grid[new_cell]['vegetation'] == 2 and
-                    self.grid[new_cell]['population'] < self.K * (1 - self.e_K) and
+                    self.grid[new_cell]['population'] < self.K * self.e_K and# (1 - self.e_K) and
                     0 < self.grid[new_cell]['elevation'] < 1000):
                 leap_cells.append(new_cell)
         return leap_cells
@@ -129,7 +131,7 @@ class Model:
             new_cell = (cell[0]+i, cell[1]+j)
             if (new_cell in self.grid and
                     self.grid[new_cell]['vegetation'] >= self.forest and
-                    self.grid[new_cell]['population'] < self.K * (1 - self.e_K) and
+                    self.grid[new_cell]['population'] < self.K * self.e_K and#(1 - self.e_K) and
                     0 < self.grid[new_cell]['elevation'] < 1000):
                 neighbor_cells.append(new_cell)
         return neighbor_cells
@@ -143,11 +145,11 @@ class Model:
                 self.grid[cell]['vegetation'] = vegetation[cell[1]][cell[0]]
 
     def get_score(self, sites):
-        coords = list(zip(sites['x'], sites['y']))
+        coords = list(zip(sites['Longitude'], sites['Latitude']))
         self.sites = sites.copy()
         self.sites['sim_dates'] = [self.grid[to_grid(coord)]['arrival_time']
                                    for coord in coords]
-        self.score = np.sqrt(np.mean((self.sites['bp'] - self.sites['sim_dates'])**2))
+        #self.score = np.sqrt(np.mean((self.sites['bp'] - self.sites['sim_dates'])**2))
 
     def check_env(self, cell):
         if self.forest and self.grid[cell]['vegetation'] < self.forest:

@@ -4,12 +4,13 @@ import geopandas as gpd
 import seaborn as sns
 sns.set(font_scale=1.5)
 
+from itertools import product
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from matplotlib.colors import ListedColormap
 from model import *
 
 
-SITES = pd.read_csv('sites/tupi_filtered.csv')
+SITES = pd.read_csv('sites/tupi_filtered_2.csv')
 ele = np.loadtxt('layers/ele.asc', skiprows=6)
 ele[ele < 1] = np.nan
 ele[ele >= 1] = 1
@@ -83,7 +84,7 @@ def test_model(params):
     time_slices = []
     maps = []
     scores = []
-    rmse = []
+    rmse = SITES
 
     num_gen = (params['start_date'] - 500) // STEP
 
@@ -95,23 +96,25 @@ def test_model(params):
         time_slices += model.slices
         maps.append(model.arrival_times)
         scores.append(model.sites)
-        rmse.append(model.score)
+        rmse[f'sim{i}'] = model.sites['sim_dates']
 
     return time_slices, maps, scores, rmse
 
 
 def main():
-    params = {'start_date': 6000,
+    params = {'start_date': 5800,
               'start_coords': (-61.96, -10.96),
-              'r': 0.025,
-              'e_K': 0.25}
+              'r': 0.02,
+              'e_K': 0.7}
 
     time_slices, maps, scores, rmse = test_model(params)
 
     plot_time_slices(time_slices, 'img/time_slices.jpeg')
     plot_maps(maps, 'img/maps.jpeg')
     plot_graphs(scores, 'img/graphs.jpeg')
-    np.savetxt('rmse.csv', rmse)
+    np.savetxt('img/rmse.csv', rmse, fmt='%5s', delimiter=',',
+               header=','.join(rmse.columns), comments='')
+
 
 if __name__ == '__main__':
     main()
