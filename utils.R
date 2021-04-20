@@ -67,5 +67,5 @@ tupi.f <- filterDates(tupi, 0)
 tupi.f$dist <- getDist(tupi.f, tupi.f[1,])
 #tupi.df <- data.frame(x=tupi.f$Longitude, y=tupi.f$Latitude, bp=tupi.f$bp, dist=tupi.f$dist)
 tupi.df <- as.data.frame(tupi.f)[c("Longitude", "Latitude", "dist", "bp", "C14Age", "C14SD", "calCurves", "resOffsets", "resErrors")]
-write.csv(tupi.df, "tupi_filtered_2.csv")
+write.csv(tupi.df, "sites/tupi_filtered.csv")
 }
