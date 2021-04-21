@@ -34,11 +34,13 @@ class ModelTest:
         self.rs = rs
         self.e_Ks = e_Ks
 
-        self.sites = SITES
+        #self.sites = SITES
+        self.sites_df = pd.DataFrame(columns=['id', 'forest', 'r', 'e_K', 'dist', 'sim_dates'])
 
         self.models = []
 
     def run_models(self):
+        model_id = 1
         for i in list(product(self.start_dates, self.start_coords, self.rs, self.e_Ks)):
             params = {'start_date': i[0],
                       'start_coord': i[1],
@@ -51,7 +53,18 @@ class ModelTest:
                 model.get_score(SITES)
 
                 self.models.append(model)
-                self.sites[f'sim_{j}'] = model.sites['sim_dates']
+
+                df = pd.DataFrame(columns=['id', 'forest', 'r', 'e_K', 'dist', 'sim_dates'])
+                df['dist'] = model.sites['dist']
+                df['sim_dates'] = model.sites['sim_dates']
+                df['id'] = model_id
+                df['forest'] = model.forest
+                df['r'] = model.r
+                df['e_K'] = model.e_K
+
+                self.sites_df = pd.concat([self.sites_df, df])
+
+            model_id += 1
 
     def plot_maps(self, filepath=None):
         maps = [model.arrival_times for model in self.models]
@@ -60,8 +73,6 @@ class ModelTest:
             mp[mp==0] = np.nan
             ax.imshow(ele, cmap=white, extent=[-81.34,-34.79,-55.92,12.47])
             im = ax.imshow(mp, cmap='viridis', extent=[-81.34,-34.79,-55.92,12.47], zorder=3)
-            #ax.xaxis.set_ticklabels([])
-            #ax.yaxis.set_ticklabels([])
         plt.axis('equal')
         divider = make_axes_locatable(ax)
         cbar = fig.colorbar(im, ax=axes.ravel().tolist(), orientation='vertical',
@@ -77,8 +88,6 @@ class ModelTest:
         slices = [i for model in self.models for i in model.slices]
         num_slices = len(slices) // 3
         fig, axes = plt.subplots(3, num_slices)
-        #colors = [blue_cmap] * 6 + [red_cmap] * 6 + [green_cmap] * 6
-        #for sl, ax, c in zip(slices, axes.flat, colors):
         for sl, ax in zip(slices, axes.flat):
             mp, date = sl
             ax.imshow(ele, cmap=white, extent=[-81.34,-34.79,-55.92,12.47])
@@ -93,15 +102,17 @@ class ModelTest:
         else:
             plt.show()
 
-    def plot_graphs(self, filepath=None):
-        scores = [model.sites for model in self.models]
-        fig, axes = plt.subplots(1, len(scores))
-        #for score, ax, c in zip(scores, axes.flat, [blue, red, green]):
-        for score, ax in zip(scores, axes.flat):
+    def plot_graphs(self, var=None, filepath=None):
+        fig, axes = plt.subplots(1, 3)
+        for i, ax, forest in zip(range(1, len(self.models) + 1), axes.flat, ['null', 'dry', 'moist']):
+            sites_to_plot = self.sites_df.loc[(self.sites_df['forest'] == forest) & (self.sites_df['sim_dates'] != 0)]
             ax.scatter(SITES['dist'], SITES['bp'], c='darkgray')
-            ax.scatter(score['dist'][score['sim_dates'] != 0],
-                       score['sim_dates'][score['sim_dates'] != 0],
-                       c='black')
+            if var is not None:
+                ax.scatter(sites_to_plot['dist'], sites_to_plot['sim_dates'],
+                           c=sites_to_plot['r'], cmap='viridis', s=sites_to_plot['e_K']*100)
+            else:
+                ax.scatter(sites_to_plot['dist'], sites_to_plot['sim_dates'],
+                           c='black')
             ax.set_xlabel('distance (km)')
             ax.set_ylabel('age (cal BP)')
         fig.set_size_inches(18, 6)
@@ -112,16 +123,17 @@ class ModelTest:
             plt.show()
 
     def write_sim_dates(self, filepath):
-        np.savetxt(filepath, self.sites, fmt='%5s', delimiter=',',
-                   header=','.join(self.sites.columns), comments='')
+        np.savetxt(filepath, self.sites_df, fmt='%5s', delimiter=',',
+                   header=','.join(self.sites_df.columns), comments='')
 
 
 def main():
-    mt = ModelTest([4000], [(-61.96, -10.96)], [0.028], [0.25])
+    mt = ModelTest([5800], [(-61.96, -10.96)], [0.02, 0.04], [0.1, 0.3])
     mt.run_models()
-    mt.plot_maps('img/maps.jpeg')
-    mt.plot_time_slices('img/time_slices.jpeg')
-    mt.plot_graphs('img/graphs.jpeg')
+    print(mt.sites_df)
+    #mt.plot_maps('img/maps.jpeg')
+    #mt.plot_time_slices('img/time_slices.jpeg')
+    mt.plot_graphs(var='r')
     mt.write_sim_dates('img/sim_dates.csv')
 
 

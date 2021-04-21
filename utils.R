@@ -1,6 +1,7 @@
 library(sp)
 library(rcarbon)
 library(dplyr)
+library(data.table)
 
 filterDates <- function(sites, radius) {
     clusters <- zerodist(sites, zero=radius, unique.ID=T)
@@ -29,6 +30,33 @@ bootstrapDates <- function(calDates) {
 
 getScore <- function(filename, num_iter=100) {
     sites <- read.csv(filename)
+    tupi <- read.csv("sites/tupi_filtered.csv")
+    cal <- calibrate(tupi$C14Age, tupi$C14SD, calCurves=tupi$calCurves,
+                     resOffsets=tupi$resOffsets, resErrors=tupi$resErrors)
+    res <- matrix(ncol=4, nrow=max(sites$id))
+    colnames(res) <- c("model", "null", "dry", "moist")
+    for (i in 1:max(sites$id)) {
+        simDates <- sites[sites$id == i,]
+        for (j in c("null", "dry", "moist")) {
+            veg_model <- simDates[simDates$forest %like% j,]
+            cat("\nbootstrapping dates...\n")
+            pb <- txtProgressBar(min = 0, max = num_iter, style = 3)
+            errors <- vector(mode="numeric", length=num_iter)
+            for (k in 1:num_iter) {
+                sampled <- bootstrapDates(cal)
+                rmse <- sqrt(sum((sampled - veg_model$sim_dates)^2) / length(sampled))
+                errors[k] <- rmse
+                setTxtProgressBar(pb, k)
+            }
+            res[i, "model"] <- i
+            res[i, j] <- mean(errors)
+        }
+    }
+    res.df <- as.data.frame(res)
+    write.csv(res.df, "img/res.csv")
+    return(res.df)
+
+    if(FALSE) {
     simDates <- sites %>% select(contains('sim'))
     cal <- calibrate(sites$C14Age, sites$C14SD, calCurves=sites$calCurves,
                      resOffsets=sites$resOffsets, resErrors=sites$resErrors)
@@ -51,7 +79,7 @@ getScore <- function(filename, num_iter=100) {
     }
     res.df <- as.data.frame(res)
     write.csv(res.df, "img/res.csv")
-    return(res.df)
+    return(res.df) }
 }
 
 if(FALSE){

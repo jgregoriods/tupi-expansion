@@ -149,10 +149,17 @@ class Model:
         self.sites = sites.copy()
         self.sites['sim_dates'] = [self.grid[to_grid(coord)]['arrival_time']
                                    for coord in coords]
-        #self.score = np.sqrt(np.mean((self.sites['bp'] - self.sites['sim_dates'])**2))
 
     def check_env(self, cell):
         if not self.grid[cell]['vegetation']:
+            migrants = self.grid[cell]['population']
+            neighbor_cells = self.get_neighbor_cells(cell)
+            if neighbor_cells:
+                self.move(cell, neighbor_cells, migrants)
+            else:
+                leap_cells = self.get_leap_cells(cell)
+                if leap_cells:
+                    self.move(cell, leap_cells, migrants)
             self.grid[cell]['population'] = 0
             self.settled_cells.remove(cell)
 
