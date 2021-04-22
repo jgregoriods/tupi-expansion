@@ -18,7 +18,7 @@ K = 1
 GAMMA = 1
 LEAP_DISTANCE = 150
 
-albers = pyproj.Proj("+proj=aea +lat_1=-5 +lat_2=-42 +lat_0=-32 +lon_0=-60 \
+albers = pyproj.Proj("+proj=aea +lat_1=-5 +lat_2=-42 +lat_0=-32 +lon_0=-60\
                       +x_0=0 +y_0=0 +ellps=aust_SA +units=m +no_defs")
 
 
@@ -139,8 +139,7 @@ class Model:
     def update(self):
         if np.ceil(self.date / 1000) != self.time_slice:
             self.time_slice = int(np.ceil(self.date / 1000))
-            vegetation = np.loadtxt(f'layers/veg_{self.forest}/veg_{self.time_slice}000.asc',
-                                    skiprows=6)
+            vegetation = np.loadtxt(f'layers/veg_{self.forest}/veg_{self.time_slice}000.asc', skiprows=6)
             for cell in self.grid:
                 self.grid[cell]['vegetation'] = vegetation[cell[1]][cell[0]]
 
