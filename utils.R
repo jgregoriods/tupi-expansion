@@ -33,11 +33,11 @@ getScore <- function(filename, num_iter=100) {
     tupi <- read.csv("sites/tupi_filtered.csv")
     cal <- calibrate(tupi$C14Age, tupi$C14SD, calCurves=tupi$calCurves,
                      resOffsets=tupi$resOffsets, resErrors=tupi$resErrors)
-    res <- matrix(ncol=4, nrow=max(sites$id))
-    colnames(res) <- c("model", "null", "dry", "moist")
+    res <- matrix(ncol=3, nrow=max(sites$id))
+    colnames(res) <- c("model", "null", "moist")
     for (i in 1:max(sites$id)) {
         simDates <- sites[sites$id == i,]
-        for (j in c("null", "dry", "moist")) {
+        for (j in c("null", "moist")) {
             veg_model <- simDates[simDates$forest %like% j,]
             cat("\nbootstrapping dates...\n")
             pb <- txtProgressBar(min = 0, max = num_iter, style = 3)

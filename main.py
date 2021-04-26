@@ -46,7 +46,7 @@ class ModelTest:
                       'r': i[2],
                       'e_K': i[3]}
             num_gen = (i[0] - 500) // STEP
-            for j in ['null', 'dry', 'moist']:
+            for j in ['null', 'moist']:
                 model = Model(**params, forest=j)
                 model.run(num_gen)
                 model.get_score(SITES)
@@ -68,7 +68,7 @@ class ModelTest:
     def plot_maps(self, filepath=None):
         extent = [-81.34,-34.79,-55.92,12.47]
         maps = [model.arrival_times for model in self.models]
-        fig, axes = plt.subplots(len(maps) // 3, 3)
+        fig, axes = plt.subplots(len(maps) // 2, 2)
         for mp, ax in zip(maps, axes.flat):
             mp[mp==0] = np.nan
             ax.imshow(ele, cmap=white, extent=extent)
@@ -77,19 +77,19 @@ class ModelTest:
         divider = make_axes_locatable(ax)
         cbar = fig.colorbar(im, ax=axes.ravel().tolist(), orientation='vertical', fraction=0.046, pad=0.04)
         cbar.set_label('sim BP')
-        fig.set_size_inches(18, len(maps) * 2)
+        fig.set_size_inches(12, len(maps)*3)
         if filepath is not None:
             plt.savefig(filepath, dpi=300, bbox_inches='tight')
         else:
             plt.show()
 
     def plot_time_slices(self, filepath=None):
-        if len(self.models) > 3:
+        if len(self.models) > 2:
             return
         extent = [-81.34,-34.79,-55.92,12.47]
         slices = [i for model in self.models for i in model.slices]
-        num_slices = len(slices) // 3
-        fig, axes = plt.subplots(3, num_slices)
+        num_slices = len(slices) // 2
+        fig, axes = plt.subplots(2, num_slices)
         for sl, ax in zip(slices, axes.flat):
             mp, date = sl
             ax.imshow(ele, cmap=white, extent=extent)
@@ -97,7 +97,7 @@ class ModelTest:
             ax.set_title(f'{date} BP')
             ax.xaxis.set_ticklabels([])
             ax.yaxis.set_ticklabels([])
-        fig.set_size_inches(12, 12)
+        fig.set_size_inches(12, 6)
         fig.tight_layout()
         if filepath is not None:
             plt.savefig(filepath, dpi=300)
@@ -105,13 +105,13 @@ class ModelTest:
             plt.show()
 
     def plot_graphs(self, filepath=None):
-        fig, axes = plt.subplots(1, 3)
-        models = ['null', 'dry', 'moist']
+        fig, axes = plt.subplots(1, 2)
+        models = ['null', 'moist']
         for i, ax, forest in zip(range(1, len(self.models) + 1), axes.flat, models):
             sites_to_plot = self.sites_df.loc[(self.sites_df['forest'] == forest) &
                                               (self.sites_df['sim_dates'] != 0)]
             ax.scatter(SITES['dist'], SITES['bp'], c='darkgray')
-            if len(self.models) > 3:
+            if len(self.models) > 2:
                 ax.scatter(sites_to_plot['dist'], sites_to_plot['sim_dates'],
                            c=sites_to_plot['r'], cmap='viridis',
                            s=sites_to_plot['e_K'] * 100)
@@ -119,7 +119,7 @@ class ModelTest:
                 ax.scatter(sites_to_plot['dist'], sites_to_plot['sim_dates'], c='black')
             ax.set_xlabel('distance (km)')
             ax.set_ylabel('age (cal BP)')
-        fig.set_size_inches(18, 6)
+        fig.set_size_inches(12, 6)
         fig.tight_layout()
         if filepath is not None:
             plt.savefig(filepath, dpi=300)
@@ -134,13 +134,13 @@ class ModelTest:
 def main():
     mt = ModelTest(start_dates=[5800],
                    start_coords=[(-61.96, -10.96)],
-                   rs=[0.028, 0.03],
-                   e_Ks=[0.1, 0.2])
+                   rs=[0.028],
+                   e_Ks=[0.2])
     mt.run_models()
-    #mt.plot_maps()
-    #mt.plot_time_slices('img/time_slices.jpeg')
-    mt.plot_graphs()
-    #mt.write_sim_dates('img/sim_dates.csv')
+    mt.plot_maps('img/maps.jpeg')
+    mt.plot_time_slices('img/time_slices.jpg')
+    mt.plot_graphs('img/graphs.jpeg')
+    mt.write_sim_dates('img/sim_dates.csv')
 
 
 if __name__ == '__main__':
