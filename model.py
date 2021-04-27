@@ -16,7 +16,7 @@ HEADER = '\n'.join([' '.join(x) for x in header_info])
 STEP = 30
 K = 1
 GAMMA = 1
-LEAP_DISTANCE = 100
+LEAP_DISTANCE = 150
 
 albers = pyproj.Proj("+proj=aea +lat_1=-5 +lat_2=-42 +lat_0=-32 +lon_0=-60\
                       +x_0=0 +y_0=0 +ellps=aust_SA +units=m +no_defs")
@@ -86,8 +86,9 @@ class Model:
 
     def grow_population(self, cell):
         N = self.grid[cell]['population']
-        r = self.r * (1 - (N / self.K))
-        self.grid[cell]['population'] = round(N * (1 + r)**STEP)
+        #r = self.r * (1 - (N / self.K))
+        #self.grid[cell]['population'] = round(N * (1 + r)**STEP)
+        self.grid[cell]['population'] = round((self.K * N) / ((self.K - N) * (np.exp(-self.r * STEP)) + N))
 
     def disperse_population(self, cell):
         N = self.grid[cell]['population']

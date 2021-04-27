@@ -69,10 +69,11 @@ class ModelTest:
         extent = [-81.34,-34.79,-55.92,12.47]
         maps = [model.arrival_times for model in self.models]
         fig, axes = plt.subplots(len(maps) // 2, 2)
+        cmap = plt.get_cmap('viridis', 10)
         for mp, ax in zip(maps, axes.flat):
             mp[mp==0] = np.nan
             ax.imshow(ele, cmap=white, extent=extent)
-            im = ax.imshow(mp, cmap='viridis', extent=extent, zorder=3)
+            im = ax.imshow(mp, cmap=cmap, extent=extent, zorder=3)
         plt.axis('equal')
         divider = make_axes_locatable(ax)
         cbar = fig.colorbar(im, ax=axes.ravel().tolist(), orientation='vertical', fraction=0.046, pad=0.04)
@@ -135,11 +136,11 @@ def main():
     mt = ModelTest(start_dates=[5800],
                    start_coords=[(-61.96, -10.96)],
                    rs=[0.028],
-                   e_Ks=[0.2])
+                   e_Ks=[0.25])
     mt.run_models()
-    mt.plot_maps('img/maps.jpeg')
-    mt.plot_time_slices('img/time_slices.jpg')
-    mt.plot_graphs('img/graphs.jpeg')
+    mt.plot_maps('img/maps.pdf')
+    mt.plot_time_slices('img/time_slices.pdf')
+    mt.plot_graphs('img/graphs.pdf')
     mt.write_sim_dates('img/sim_dates.csv')
 
 

@@ -37,5 +37,6 @@ plt_b <- ggplot() +
     scale_fill_identity(labels=c("Tupi languages"), guide = "legend")
 
 grid.arrange(plt_a, plt_b, ncol = 2)
-dev.print(jpeg, "img/tupi.jpeg", res=300, width=2048)
+#dev.print(jpeg, "img/tupi.jpeg", res=300, width=2048)
+dev.print(pdf, "img/tupi.pdf")
 dev.off()
