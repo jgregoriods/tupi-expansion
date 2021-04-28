@@ -3,6 +3,7 @@ import pyproj
 
 from tqdm import tqdm
 
+
 header_info = np.loadtxt('layers/ele.asc', dtype='U', max_rows=6)
 NCOLS = int(header_info[0][1])
 NROWS = int(header_info[1][1])
@@ -67,12 +68,12 @@ class Model:
         self.arrival_times = None
 
     def setup_layers(self):
-        elevation = np.loadtxt('layers/ele.asc', skiprows=6)
+        #elevation = np.loadtxt('layers/ele.asc', skiprows=6)
         vegetation = np.loadtxt(f'layers/veg_{self.forest}/veg_{self.time_slice}000.asc',
                                 skiprows=6)
         for row in range(NROWS):
             for col in range(NCOLS):
-                self.grid[(col, row)] = {'elevation': elevation[row, col],
+                self.grid[(col, row)] = {#'elevation': elevation[row, col],
                                          'population': 0,
                                          'vegetation': vegetation[row, col],
                                          'arrival_time': 0}

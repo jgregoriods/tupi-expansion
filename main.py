@@ -133,9 +133,9 @@ class ModelTest:
 
 
 def main():
-    mt = ModelTest(start_dates=[5800],
+    mt = ModelTest(start_dates=[5000],
                    start_coords=[(-61.96, -10.96)],
-                   rs=[0.028],
+                   rs=[0.025],
                    e_Ks=[0.25])
     mt.run_models()
     mt.plot_maps('img/maps.pdf')
