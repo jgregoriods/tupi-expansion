@@ -25,7 +25,10 @@ plt_a <- ggplot() +
     scale_color_identity(labels=c("Dated sites"), guide = "legend") +
     theme(axis.title.x=element_blank(), axis.title.y=element_blank(),
           panel.background = element_rect(fill = "aliceblue"),
-          legend.position="bottom", legend.title = element_blank())
+          legend.position="bottom", legend.title = element_blank(),
+          panel.border = element_rect(colour = "black", fill=NA),
+          plot.title=element_text(size=16)) +
+    labs(title='a')
 
 plt_b <- ggplot() +
     geom_sf(data=sam, fill="white", color=NA) +
@@ -33,8 +36,11 @@ plt_b <- ggplot() +
     geom_sf(data=coast, fill=NA, color="black", size=0.2) +
     theme(axis.title.x=element_blank(), axis.title.y=element_blank(),
           panel.background = element_rect(fill = "aliceblue"),
-          legend.position="bottom", legend.title = element_blank()) +
-    scale_fill_identity(labels=c("Tupi languages"), guide = "legend")
+          legend.position="bottom", legend.title = element_blank(),
+          panel.border = element_rect(colour = "black", fill=NA),
+          plot.title=element_text(size=16)) +
+    scale_fill_identity(labels=c("Tupi languages"), guide = "legend") +
+    labs(title='b')
 
 grid.arrange(plt_a, plt_b, ncol = 2)
 #dev.print(jpeg, "img/tupi.jpeg", res=300, width=2048)

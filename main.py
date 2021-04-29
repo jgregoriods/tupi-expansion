@@ -1,3 +1,4 @@
+import matplotlib
 import matplotlib.pyplot as plt
 import pandas as pd
 import geopandas as gpd
@@ -9,13 +10,16 @@ from matplotlib.colors import ListedColormap
 from model import *
 
 
-sns.set(font_scale=1.5)
+matplotlib.rcParams.update({'font.size': 12})
+#sns.set(font_scale=1.5)
+#sns.set_style('white')
 
 SITES = pd.read_csv('sites/tupi_filtered.csv')
 ele = np.loadtxt('layers/ele.asc', skiprows=6)
 ele[ele < 1] = np.nan
 ele[ele >= 1] = 1
 sam = gpd.read_file('shp/south_america.shp')
+sam_albers = gpd.read_file('shp/south_america_albers.shp')
 
 blue = '#f9b641ff'
 red = '#cc6a70ff'
@@ -66,19 +70,24 @@ class ModelTest:
             model_id += 1
 
     def plot_maps(self, filepath=None):
-        extent = [-81.34,-34.79,-55.92,12.47]
+        extent = [-2864897, 3335102, -3014754, 5185245]
         maps = [model.arrival_times for model in self.models]
+        max_age = int(np.ceil(np.max(maps) / 1000) * 1000)
         fig, axes = plt.subplots(len(maps) // 2, 2)
-        cmap = plt.get_cmap('viridis', 10)
-        for mp, ax in zip(maps, axes.flat):
+        cmap = plt.get_cmap('viridis', (max_age - 500) // 500)
+        for mp, ax, letter in zip(maps, axes.flat, ['a', 'b']):
             mp[mp==0] = np.nan
-            ax.imshow(ele, cmap=white, extent=extent)
-            im = ax.imshow(mp, cmap=cmap, extent=extent, zorder=3)
-        plt.axis('equal')
+            #ax.imshow(ele, cmap=white, extent=extent)
+            im = ax.imshow(mp, cmap=cmap, extent=extent, vmin=500, vmax=max_age)
+            sam_albers.plot(ax=ax, color='none', edgecolor='black')
+            ax.set_xlim(extent[0] + 200000, extent[1] - 200000)
+            ax.text(0, 1, letter, transform=ax.transAxes, fontsize=22)
+            ax.axis('off')
+        #plt.axis('equal')
         divider = make_axes_locatable(ax)
-        cbar = fig.colorbar(im, ax=axes.ravel().tolist(), orientation='vertical', fraction=0.046, pad=0.04)
-        cbar.set_label('sim BP')
-        fig.set_size_inches(12, len(maps)*3)
+        cbar = fig.colorbar(im, ax=axes.ravel().tolist(), orientation='vertical',
+                            fraction=0.026,pad=0.05).set_label('sim BP')
+        fig.set_size_inches(8, len(maps)*3)
         if filepath is not None:
             plt.savefig(filepath, dpi=300, bbox_inches='tight')
         else:
@@ -87,18 +96,18 @@ class ModelTest:
     def plot_time_slices(self, filepath=None):
         if len(self.models) > 2:
             return
-        extent = [-81.34,-34.79,-55.92,12.47]
+        extent = [-2864897, 3335102, -3014754, 5185245]
         slices = [i for model in self.models for i in model.slices]
         num_slices = len(slices) // 2
         fig, axes = plt.subplots(2, num_slices)
         for sl, ax in zip(slices, axes.flat):
             mp, date = sl
-            ax.imshow(ele, cmap=white, extent=extent)
             ax.imshow(mp, cmap=black, extent=extent, zorder=3, vmax=2)
+            sam_albers.plot(ax=ax, color='none', edgecolor='black')
+            ax.set_xlim(extent[0] + 200000, extent[1] - 200000)
             ax.set_title(f'{date} BP')
-            ax.xaxis.set_ticklabels([])
-            ax.yaxis.set_ticklabels([])
-        fig.set_size_inches(12, 6)
+            ax.axis('off')
+        fig.set_size_inches(10, 6)
         fig.tight_layout()
         if filepath is not None:
             plt.savefig(filepath, dpi=300)
@@ -108,7 +117,7 @@ class ModelTest:
     def plot_graphs(self, filepath=None):
         fig, axes = plt.subplots(1, 2)
         models = ['null', 'moist']
-        for i, ax, forest in zip(range(1, len(self.models) + 1), axes.flat, models):
+        for ax, forest, letter in zip(axes.flat, models, ['a', 'b']):
             sites_to_plot = self.sites_df.loc[(self.sites_df['forest'] == forest) &
                                               (self.sites_df['sim_dates'] != 0)]
             ax.scatter(SITES['dist'], SITES['bp'], c='darkgray')
@@ -120,6 +129,7 @@ class ModelTest:
                 ax.scatter(sites_to_plot['dist'], sites_to_plot['sim_dates'], c='black')
             ax.set_xlabel('distance (km)')
             ax.set_ylabel('age (cal BP)')
+            ax.text(0, 1.05, letter, transform=ax.transAxes, fontsize=22)
         fig.set_size_inches(12, 6)
         fig.tight_layout()
         if filepath is not None:
@@ -136,7 +146,7 @@ def main():
     mt = ModelTest(start_dates=[5000],
                    start_coords=[(-61.96, -10.96)],
                    rs=[0.025],
-                   e_Ks=[0.25])
+                   e_Ks=[0.35])
     mt.run_models()
     mt.plot_maps('img/maps.pdf')
     mt.plot_time_slices('img/time_slices.pdf')
