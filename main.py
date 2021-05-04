@@ -146,7 +146,7 @@ def main():
     mt = ModelTest(start_dates=[5000],
                    start_coords=[(-61.96, -10.96)],
                    rs=[0.025],
-                   e_Ks=[0.35])
+                   e_Ks=[0.3])
     mt.run_models()
     mt.plot_maps('img/maps.pdf')
     mt.plot_time_slices('img/time_slices.pdf')
