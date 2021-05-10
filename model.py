@@ -1,6 +1,9 @@
 import numpy as np
 import pyproj
+import statsmodels.api as sm
+import numpy as np
 
+from scipy import optimize
 from tqdm import tqdm
 
 
@@ -46,6 +49,31 @@ leap_mask = [(i, j) for i in range(-dist, dist + 1)
              and 1 < np.round(get_distance((0, 0), (i, j))) <= dist]
 
 
+def piecewise(x,x0,x1,y0,y1,k0,k1,k2):
+    return np.piecewise(x , [x <= x0, np.logical_and(x0<x, x<= x1),x>x1] , [lambda x:k0*x + y0, lambda x:k1*(x-x0)+y1+k0*x0,
+                                                                            lambda x:k2*(x-x1) + y0+y1+k0*x0+k1*(x1-x0)])
+
+
+def fit_piecewise(x, y):
+    perr_min = np.inf
+    p_best = None
+    for n in range(1000):
+        k = np.random.rand(7)*3000
+        p , e = optimize.curve_fit(piecewise, x, y,p0=k)
+        perr = np.sum(np.abs(y - piecewise(x, *p)))
+        if(perr < perr_min):
+            perr_min = perr
+            p_best = p
+            e_best = e
+    return p_best
+
+
+def fit_OLS(x, y):
+    x1 = sm.add_constant(x)
+    ols = sm.OLS(y, x1).fit()
+    return ols.params[1]
+
+
 class Model:
     def __init__(self, start_date, start_coord, r, e_K, forest):
         self.date = start_date
@@ -62,19 +90,16 @@ class Model:
         self.setup_layers()
         self.setup_population()
 
-        self.score = None
         self.sites = None
         self.slices = None
         self.arrival_times = None
 
     def setup_layers(self):
-        #elevation = np.loadtxt('layers/ele.asc', skiprows=6)
         vegetation = np.loadtxt(f'layers/veg_{self.forest}/veg_{self.time_slice}000.asc',
                                 skiprows=6)
         for row in range(NROWS):
             for col in range(NCOLS):
-                self.grid[(col, row)] = {#'elevation': elevation[row, col],
-                                         'population': 0,
+                self.grid[(col, row)] = {'population': 0,
                                          'vegetation': vegetation[row, col],
                                          'arrival_time': 0}
 
@@ -150,6 +175,16 @@ class Model:
         self.sites = sites.copy()
         self.sites['sim_dates'] = [self.grid[to_grid(coord)]['arrival_time']
                                    for coord in coords]
+        data = self.sites[self.sites['sim_dates'] != 0]
+        if self.forest == 'null':
+            linear_slope = fit_OLS(data['dist'].values, data['sim_dates'].values)
+            print(f'Speed: {-round(1/linear_slope, 2)} km/yr')
+        elif self.forest == 'moist':
+            #x_break, slope_1, slope_2 = fit_piecewise(data['dist'].values, data['sim_dates'].values)
+            #print(f'Speeds: {-round(1/slope_1, 2)} and {-round(1/slope_2, 2)} km/yr')
+            #print(f'Break at: {x_break} BP')
+            a = fit_piecewise(data['dist'].values, data['sim_dates'].values)
+            print(a)
 
     def check_env(self, cell):
         if not self.grid[cell]['vegetation']:
