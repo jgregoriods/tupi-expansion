@@ -129,29 +129,52 @@ class ModelTest:
                            c=sites_to_plot['r'], cmap='viridis',
                            s=sites_to_plot['e_K'] * 100)
             else:
-                km = KMeans(n_clusters=2).fit(list(zip(sites_to_plot['dist'], sites_to_plot['sim_dates'])))
-                sites_to_plot['cluster'] = km.labels_
+                if forest == 'moist':
+                    km = KMeans(n_clusters=2).fit(list(zip(sites_to_plot['dist'], sites_to_plot['sim_dates'])))
+                    sites_to_plot['cluster'] = km.labels_
 
-                subs_a = sites_to_plot[sites_to_plot['cluster'] == 0]
-                subs_a['sim_dates'] = pd.to_numeric(subs_a['sim_dates'])
-                y = subs_a['sim_dates'].values
-                X = sm.add_constant(subs_a['dist'].values)
+                    subs_a = sites_to_plot[sites_to_plot['cluster'] == 0]
+                    subs_a['sim_dates'] = pd.to_numeric(subs_a['sim_dates'])
+                    y = subs_a['sim_dates'].values
+                    X = sm.add_constant(subs_a['dist'].values)
 
-                ols = QuantReg(y, X).fit(q=.95)
-                print(1/ols.params[1])
-                pred = ols.predict(X)
+                    ols = QuantReg(y, X).fit(q=.9)
+                    speed_a = round(-1/ols.params[1], 2)
+                    pred = ols.predict(X)
 
-                subs_b = sites_to_plot[sites_to_plot['cluster'] == 1]
-                subs_b['sim_dates'] = pd.to_numeric(subs_b['sim_dates'])
-                yb = subs_b['sim_dates'].values
-                Xb = sm.add_constant(subs_b['dist'].values)
-                olsb = QuantReg(yb, Xb).fit(q=.95)
-                print(1/olsb.params[1])
-                predb = olsb.predict(Xb)
+                    subs_b = sites_to_plot[sites_to_plot['cluster'] == 1]
+                    subs_b['sim_dates'] = pd.to_numeric(subs_b['sim_dates'])
+                    yb = subs_b['sim_dates'].values
+                    Xb = sm.add_constant(subs_b['dist'].values)
 
-                ax.scatter(sites_to_plot['dist'], sites_to_plot['sim_dates'], c='black')
-                ax.plot(subs_a['dist'], pred, c='red')
-                ax.plot(subs_b['dist'], predb, c='red')
+                    olsb = QuantReg(yb, Xb).fit(q=.95)
+                    speed_b = round(-1/olsb.params[1], 2)
+                    predb = olsb.predict(Xb)
+
+                    ax.scatter(sites_to_plot['dist'], sites_to_plot['sim_dates'], c='black')
+                    
+                    ax.plot(subs_a['dist'], pred, c='red')
+                    ax.annotate(f'{speed_a}' + ' km yr$^{-1}$',
+                                ((np.max(subs_a['dist'].values) + np.min(subs_a['dist'].values)) // 2,
+                                np.max(subs_a['sim_dates'].values)), c='red')
+                    
+                    ax.plot(subs_b['dist'], predb, c='red')
+                    ax.annotate(f'{speed_b}' + ' km yr$^{-1}$',
+                                ((np.max(subs_b['dist'].values) + np.min(subs_b['dist'].values)) // 2,
+                                np.max(subs_b['sim_dates'].values)), c='red')
+
+                else:
+                    sites_to_plot['sim_dates'] = pd.to_numeric(sites_to_plot['sim_dates'])
+                    y = sites_to_plot['sim_dates'].values
+                    X = sm.add_constant(sites_to_plot['dist'].values)
+                    ols = QuantReg(y, X).fit(q=.9)
+                    speed = round(-1/ols.params[1], 2)
+                    pred = ols.predict(X)
+                    ax.scatter(sites_to_plot['dist'], sites_to_plot['sim_dates'], c='black')
+                    ax.plot(sites_to_plot['dist'], pred, c='red')
+                    ax.annotate(f'{speed}' + ' km yr$^{-1}$',
+                                ((np.max(sites_to_plot['dist'].values) + np.min(sites_to_plot['dist'].values)) // 2,
+                                np.max(sites_to_plot['sim_dates'].values)), c='red')
 
             ax.set_xlabel('distance (km)')
             ax.set_ylabel('age (cal BP)')
@@ -176,8 +199,7 @@ def main():
     mt.run_models()
     mt.plot_maps('img/maps.pdf')
     mt.plot_time_slices('img/time_slices.pdf')
-    #mt.plot_graphs('img/graphs.pdf')
-    mt.plot_graphs()
+    mt.plot_graphs('img/graphs.pdf')
     mt.write_sim_dates('img/sim_dates.csv')
 
 
