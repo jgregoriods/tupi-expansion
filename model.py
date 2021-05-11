@@ -175,6 +175,7 @@ class Model:
         self.sites = sites.copy()
         self.sites['sim_dates'] = [self.grid[to_grid(coord)]['arrival_time']
                                    for coord in coords]
+        """
         data = self.sites[self.sites['sim_dates'] != 0]
         if self.forest == 'null':
             linear_slope = fit_OLS(data['dist'].values, data['sim_dates'].values)
@@ -185,6 +186,7 @@ class Model:
             #print(f'Break at: {x_break} BP')
             a = fit_piecewise(data['dist'].values, data['sim_dates'].values)
             print(a)
+        """
 
     def check_env(self, cell):
         if not self.grid[cell]['vegetation']:
