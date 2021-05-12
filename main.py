@@ -147,7 +147,7 @@ class ModelTest:
                     yb = subs_b['sim_dates'].values
                     Xb = sm.add_constant(subs_b['dist'].values)
 
-                    olsb = QuantReg(yb, Xb).fit(q=.95)
+                    olsb = QuantReg(yb, Xb).fit(q=.9)
                     speed_b = round(-1/olsb.params[1], 2)
                     predb = olsb.predict(Xb)
 
