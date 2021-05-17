@@ -49,7 +49,7 @@ getScore <- function(filename, num_iter=100) {
                 setTxtProgressBar(pb, k)
             }
             res[i, "model"] <- i
-            res[i, j] <- mean(errors)
+            res[i, j] <- paste(mean(errors), sd(errors))
         }
     }
     res.df <- as.data.frame(res)
