@@ -2,6 +2,8 @@ library(sp)
 library(rcarbon)
 library(dplyr)
 library(data.table)
+library(gdistance)
+library(parallel)
 
 filterDates <- function(sites, radius) {
     clusters <- zerodist(sites, zero=radius, unique.ID=T)
@@ -80,6 +82,82 @@ getScore <- function(filename, num_iter=100) {
     res.df <- as.data.frame(res)
     write.csv(res.df, "img/res.csv")
     return(res.df) }
+}
+
+simulateDispersal <- function(costRaster, origin, date, speed) {
+    tr <- transition(costRaster, function(x) 1 / mean(x), 16)
+    tr <- geoCorrection(tr)
+    ac <- accCost(tr, origin)
+    isochrones <- date - (ac / 1000 / speed)
+    isochrones[values(isochrones) < 500] <- NA
+    return(isochrones)
+}
+
+sampleDates <- function(isochrones, sites, num_iter=100, verbose=TRUE) {
+    sites$simBP <- extract(isochrones, sites)
+    sites$simBP[is.na(sites$simBP)] <- 0
+    cal <- calibrate(sites$C14Age, sites$C14SD, calCurves=sites$calCurves, resOffsets=sites$resOffsets, resErrors=sites$resErrors, verbose=FALSE)
+    errors <- vector(mode="numeric", length=num_iter)
+    if (verbose) {
+        pb <- txtProgressBar(min = 0, max = num_iter, style = 3)
+    }
+    for (k in 1:num_iter) {
+        sampled <- bootstrapDates(cal)
+        rmse <- sqrt(sum((sampled - sites$simBP)^2) / length(sampled))
+        errors[k] <- rmse
+        if (verbose) {
+            setTxtProgressBar(pb, k)
+        }
+    }
+    if (verbose) {
+        close(pb)
+    }
+    return(mean(errors))
+}
+
+frontSpeed <- function(a, delta, T) {
+    D <- (delta^2)/(4*T)
+    return((2*sqrt(a*D)) / (1 + (a*T/2)))
+}
+
+testModels <- function() {
+    bestParams <- c()
+    bestScore <- Inf
+    sites <- read.csv("sites/tupi_filtered.csv")
+    biomes <- raster("layers/biomes.asc")
+    proj4string(biomes) <- CRS("+init=epsg:4326")
+    coordinates(sites) <- ~Xadj+Yadj
+    i <- 1
+    params <- list()
+    for (a in seq(0.02,0.04,0.005)) {
+        for (delta in seq(30,60,5)) {
+            for (cost in seq(2,5,0.5)) {
+                params[[i]] <- c(a, delta, cost)
+                i <- i + 1
+            }
+        }
+    }
+    ncores <- detectCores() - 1
+    cl <- makeCluster(ncores)
+    clusterEvalQ(cl, library("gdistance"))
+    clusterEvalQ(cl, library("rcarbon"))
+    clusterExport(cl, varlist=c("biomes", "sites", "frontSpeed", "simulateDispersal", "sampleDates", "bootstrapDates"), envir = environment())
+    res <- parLapply(cl, params, function(x) {
+        a <- x[1]
+        delta <- x[2]
+        cost <- x[3]
+        costSurface <- biomes
+        costSurface[values(costSurface) > 1] <- cost
+        speed <- frontSpeed(a, delta, 30)
+        isochrones <- simulateDispersal(costSurface, c(-61.9574, -10.9557), 5000, speed)
+        score <- sampleDates(isochrones, sites, verbose=FALSE)
+        gc()
+        return(c(a, delta, cost, score))
+    })
+    stopCluster(cl)
+    res.df <- as.data.frame(matrix(unlist(res), nrow=length(res), byrow=TRUE))
+    colnames(res.df) <- c("a", "delta", "cost", "score")
+    return(res.df)
 }
 
 if(FALSE){

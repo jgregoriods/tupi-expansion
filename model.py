@@ -171,7 +171,8 @@ class Model:
                 self.grid[cell]['vegetation'] = vegetation[cell[1]][cell[0]]
 
     def get_score(self, sites):
-        coords = list(zip(sites['Longitude'], sites['Latitude']))
+        #coords = list(zip(sites['Longitude'], sites['Latitude']))
+        coords = list(zip(sites['Xadj'], sites['Yadj']))
         self.sites = sites.copy()
         self.sites['sim_dates'] = [self.grid[to_grid(coord)]['arrival_time']
                                    for coord in coords]
