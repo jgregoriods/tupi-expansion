@@ -4,6 +4,12 @@ library(dplyr)
 library(data.table)
 library(gdistance)
 library(parallel)
+library(viridisLite)
+library(rnaturalearth)
+
+wgs <- CRS("+init=epsg:4326")
+albers <- CRS("+proj=aea +lat_0=-32 +lon_0=-60 +lat_1=-5 +lat_2=-42
+               +x_0=0 +y_0=0 +ellps=aust_SA +units=m +no_defs")
 
 filterDates <- function(sites, radius) {
     clusters <- zerodist(sites, zero=radius, unique.ID=T)
@@ -44,6 +50,7 @@ getScore <- function(filename, num_iter=100) {
             cat("\nbootstrapping dates...\n")
             pb <- txtProgressBar(min = 0, max = num_iter, style = 3)
             errors <- vector(mode="numeric", length=num_iter)
+
             for (k in 1:num_iter) {
                 sampled <- bootstrapDates(cal)
                 rmse <- sqrt(sum((sampled - veg_model$sim_dates)^2) / length(sampled))
@@ -95,6 +102,7 @@ simulateDispersal <- function(costRaster, origin, date, speed) {
 
 sampleDates <- function(isochrones, sites, num_iter=100, verbose=TRUE) {
     sites$simBP <- extract(isochrones, sites)
+    if ((sum(is.na(sites$simBP)) / nrow(sites)) > 0.1) {return(Inf)}
     sites$simBP[is.na(sites$simBP)] <- 0
     cal <- calibrate(sites$C14Age, sites$C14SD, calCurves=sites$calCurves, resOffsets=sites$resOffsets, resErrors=sites$resErrors, verbose=FALSE)
     errors <- vector(mode="numeric", length=num_iter)
@@ -102,8 +110,9 @@ sampleDates <- function(isochrones, sites, num_iter=100, verbose=TRUE) {
         pb <- txtProgressBar(min = 0, max = num_iter, style = 3)
     }
     for (k in 1:num_iter) {
-        sampled <- bootstrapDates(cal)
-        rmse <- sqrt(sum((sampled - sites$simBP)^2) / length(sampled))
+        #sampled <- bootstrapDates(cal)
+        #rmse <- sqrt(sum((sampled - sites$simBP)^2) / length(sampled))
+        rmse <- sqrt(sum((sites$bp - sites$simBP)^2) / nrow(sites))
         errors[k] <- rmse
         if (verbose) {
             setTxtProgressBar(pb, k)
@@ -130,8 +139,8 @@ testModels <- function() {
     i <- 1
     params <- list()
     for (a in seq(0.02,0.04,0.005)) {
-        for (delta in seq(30,60,5)) {
-            for (cost in seq(2,5,0.5)) {
+        for (delta in seq(40,60,10)) {
+            for (cost in 1:5) {
                 params[[i]] <- c(a, delta, cost)
                 i <- i + 1
             }
@@ -157,7 +166,13 @@ testModels <- function() {
     stopCluster(cl)
     res.df <- as.data.frame(matrix(unlist(res), nrow=length(res), byrow=TRUE))
     colnames(res.df) <- c("a", "delta", "cost", "score")
+    res.df <- res.df[order(res.df$score),]
     return(res.df)
+}
+
+plotSim <- function(iso, title) {
+    plot(iso, col=viridis(9), breaks=500*1:10, axes=F, box=F, main=title)
+    plot(coast, add=T, col="black")
 }
 
 if(FALSE){

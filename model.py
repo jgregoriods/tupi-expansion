@@ -49,33 +49,9 @@ leap_mask = [(i, j) for i in range(-dist, dist + 1)
              and 1 < np.round(get_distance((0, 0), (i, j))) <= dist]
 
 
-def piecewise(x,x0,x1,y0,y1,k0,k1,k2):
-    return np.piecewise(x , [x <= x0, np.logical_and(x0<x, x<= x1),x>x1] , [lambda x:k0*x + y0, lambda x:k1*(x-x0)+y1+k0*x0,
-                                                                            lambda x:k2*(x-x1) + y0+y1+k0*x0+k1*(x1-x0)])
-
-
-def fit_piecewise(x, y):
-    perr_min = np.inf
-    p_best = None
-    for n in range(1000):
-        k = np.random.rand(7)*3000
-        p , e = optimize.curve_fit(piecewise, x, y,p0=k)
-        perr = np.sum(np.abs(y - piecewise(x, *p)))
-        if(perr < perr_min):
-            perr_min = perr
-            p_best = p
-            e_best = e
-    return p_best
-
-
-def fit_OLS(x, y):
-    x1 = sm.add_constant(x)
-    ols = sm.OLS(y, x1).fit()
-    return ols.params[1]
-
-
 class Model:
     def __init__(self, start_date, start_coord, r, e_K, forest):
+        self.start_date = start_date
         self.date = start_date
         self.time_slice = int(np.ceil(start_date / 1000))
         self.start_coord = start_coord
@@ -83,7 +59,7 @@ class Model:
         self.r = r
         self.K = CELL_AREA * K
         self.e_K = e_K
-        self.forest = forest
+        self.forest = 'veg_null' if not forest else 'veg_forest'
 
         self.grid = {}
         self.settled_cells = []
@@ -94,8 +70,10 @@ class Model:
         self.slices = None
         self.arrival_times = None
 
+        self.score = None
+
     def setup_layers(self):
-        vegetation = np.loadtxt(f'layers/veg_{self.forest}/veg_{self.time_slice}000.asc',
+        vegetation = np.loadtxt(f'layers/{self.forest}/veg_{self.time_slice}000.asc',
                                 skiprows=6)
         for row in range(NROWS):
             for col in range(NCOLS):
@@ -112,16 +90,12 @@ class Model:
 
     def grow_population(self, cell):
         N = self.grid[cell]['population']
-        #r = self.r * (1 - (N / self.K))
-        #self.grid[cell]['population'] = round(N * (1 + r)**STEP)
         self.grid[cell]['population'] = round((self.K * N) / ((self.K - N) * (np.exp(-self.r * STEP)) + N))
 
     def disperse_population(self, cell):
         N = self.grid[cell]['population']
-        #if self.e_K < N / self.K:
         migrants = round(N * self.e_K * (N / self.K)**GAMMA)
         if migrants:
-            #migrants = round(N * (1 - (self.e_K / (N / self.K))))
             neighbor_cells = self.get_neighbor_cells(cell)
             if neighbor_cells:
                 self.move(cell, neighbor_cells, migrants)
@@ -148,7 +122,6 @@ class Model:
             if (new_cell in self.grid and
                     self.grid[new_cell]['vegetation'] == 2 and
                     self.grid[new_cell]['population'] < self.K * (1 - self.e_K)):
-                    #0 < self.grid[new_cell]['elevation'] < 1000):
                 leap_cells.append(new_cell)
         return leap_cells
 
@@ -159,35 +132,25 @@ class Model:
             if (new_cell in self.grid and
                     self.grid[new_cell]['vegetation'] > 0 and
                     self.grid[new_cell]['population'] < self.K * (1 - self.e_K)):
-                    #0 < self.grid[new_cell]['elevation'] < 1000):
                 neighbor_cells.append(new_cell)
         return neighbor_cells
 
     def update(self):
         if np.ceil(self.date / 1000) != self.time_slice:
             self.time_slice = int(np.ceil(self.date / 1000))
-            vegetation = np.loadtxt(f'layers/veg_{self.forest}/veg_{self.time_slice}000.asc', skiprows=6)
+            vegetation = np.loadtxt(f'layers/{self.forest}/veg_{self.time_slice}000.asc', skiprows=6)
             for cell in self.grid:
                 self.grid[cell]['vegetation'] = vegetation[cell[1]][cell[0]]
 
     def get_score(self, sites):
-        #coords = list(zip(sites['Longitude'], sites['Latitude']))
         coords = list(zip(sites['Xadj'], sites['Yadj']))
         self.sites = sites.copy()
         self.sites['sim_dates'] = [self.grid[to_grid(coord)]['arrival_time']
                                    for coord in coords]
-        """
-        data = self.sites[self.sites['sim_dates'] != 0]
-        if self.forest == 'null':
-            linear_slope = fit_OLS(data['dist'].values, data['sim_dates'].values)
-            print(f'Speed: {-round(1/linear_slope, 2)} km/yr')
-        elif self.forest == 'moist':
-            #x_break, slope_1, slope_2 = fit_piecewise(data['dist'].values, data['sim_dates'].values)
-            #print(f'Speeds: {-round(1/slope_1, 2)} and {-round(1/slope_2, 2)} km/yr')
-            #print(f'Break at: {x_break} BP')
-            a = fit_piecewise(data['dist'].values, data['sim_dates'].values)
-            print(a)
-        """
+        if np.sum(self.sites['sim_dates'] == 0) / len(self.sites) > 0.25:
+            self.score = np.inf
+        else:
+            self.score = np.sqrt(np.sum((self.sites['bp'] - self.sites['sim_dates'])**2) / len(self.sites))
 
     def check_env(self, cell):
         if not self.grid[cell]['vegetation']:
@@ -202,7 +165,8 @@ class Model:
             self.grid[cell]['population'] = 0
             self.settled_cells.remove(cell)
 
-    def run(self, num_iter):
+    def run(self, num_iter=None):
+        num_iter = (num_iter or self.start_date - 500) // STEP
         self.slices = []
         intervals = num_iter // 5
         for i in tqdm(range(num_iter)):
