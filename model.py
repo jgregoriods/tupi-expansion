@@ -180,7 +180,6 @@ class Model:
                 p = np.zeros((NROWS, NCOLS))
                 for cell in self.grid:
                     p[cell[1]][cell[0]] = self.grid[cell]['population'] > 0
-                p[p==0] = np.nan
                 self.slices.append((p, self.date))
         self.arrival_times = np.zeros((NROWS, NCOLS))
         for cell in self.grid:
@@ -191,3 +190,7 @@ class Model:
             p = self.arrival_times.copy()
             p[p==0] = -9999
             np.savetxt(filename, p, header=HEADER, comments='')
+        if self.slices:
+            for i in range(len(self.slices)):
+                p = self.slices[i][0].copy()
+                np.savetxt(f'{filename[:-4]}_{self.slices[i][1]}.asc', p, header=HEADER, comments='')

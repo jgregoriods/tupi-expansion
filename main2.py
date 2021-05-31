@@ -211,11 +211,13 @@ def main():
     m.run()
     m.get_score(SITES)
     print(m.score)
+    m.write('res/forest_model.asc')
 
     m2 = Model(5000, (-61.96, -10.96), 0.025, 0.3, False)
     m2.run()
     m2.get_score(SITES)
     print(m2.score)
+    m2.write('res/null_model.asc')
 
 
 if __name__ == '__main__':
