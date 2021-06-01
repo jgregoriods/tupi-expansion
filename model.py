@@ -1,7 +1,6 @@
 import numpy as np
 import pyproj
 import statsmodels.api as sm
-import numpy as np
 
 from scipy import optimize
 from tqdm import tqdm

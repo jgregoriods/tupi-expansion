@@ -31,16 +31,16 @@ fm <- projectRaster(fm, iso.null)
 plt <- levelplot(stack(iso.null, iso.forest), at=500*1:10, col.regions=viridis(9),
           names.attr=c("a", "b"), scales=list(x=list(draw=FALSE),
           y=list(draw=F)), xlab="", ylab="",
-          colorkey=list(height=0.75, width=1)) + layer(sp.polygons(coast))
+          colorkey=list(height=0.8, width=1)) + layer(sp.polygons(coast))
 plot(plt)
 
-dev.print(jpeg, "disperse.jpg", width=1200, height=900, res=300)
+dev.print(jpeg, "disperse.jpg", width=2000, height=1500, res=300)
 dev.off()
 
 plt <- levelplot(stack(nm, fm), at=500*1:10, col.regions=viridis(9),
           names.attr=c("a", "b"), scales=list(x=list(draw=FALSE),
           y=list(draw=F)), xlab="", ylab="",
-          colorkey=list(height=0.75, width=1)) + layer(sp.polygons(coast))
+          colorkey=list(height=0.8, width=1)) + layer(sp.polygons(coast))
 plot(plt)
 
 dev.print(jpeg, "sim.jpg", width=1200, height=900, res=300)
@@ -64,10 +64,10 @@ plt <- levelplot(stack(lst), layout=c(5,2), col.regions = gray(seq(1,0,-1)),
                  names.attr=c(paste(as.character(rep(sq, 2)), "BP")),
                  scales=list(x=list(draw=FALSE), y=list(draw=F)), xlab="", ylab="",
                  colorkey=FALSE) +
-       layer(sp.polygons(coast)) 
+       layer(sp.polygons(coast))
 plot(plt)
 
-dev.print(jpeg, "slices.jpg", width=1200, height=900, res=300)
+dev.print(jpeg, "slices.jpg", width=2000, height=1500, res=300)
 dev.off()
 
 # SCATTERPLOT
@@ -83,5 +83,5 @@ points(sim_dates_null$dist, sim_dates_null$sim_dates, pch=19)
 plot(real_dates$dist, real_dates$bp, pch=21, bg="white", xlab="distance from origin (km)", ylab="age (cal BP)", main="b")
 points(sim_dates_forest$dist, sim_dates_forest$sim_dates, pch=19)
 
-dev.print(jpeg, "scatterplot.jpg", width=2400, height=1200, res=300)
+dev.print(jpeg, "scatterplot.jpg", width=3000, height=1500, res=300)
 dev.off()
