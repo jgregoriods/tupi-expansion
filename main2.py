@@ -10,6 +10,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 from matplotlib.colors import ListedColormap
 from sklearn.cluster import KMeans
 from statsmodels.regression.quantile_regression import QuantReg
+from tqdm import tqdm
 from model import *
 
 
@@ -207,6 +208,7 @@ def main():
     mt.plot_graphs('img/graphs.pdf')
     mt.write_sim_dates('img/sim_dates.csv')"""
 
+    """
     m = Model(5000, (-61.96, -10.96), 0.025, 0.3, True)
     m.run()
     m.get_score(SITES)
@@ -218,6 +220,8 @@ def main():
     m2.get_score(SITES)
     print(m2.score)
     m2.write('res/null_model.asc')
+    """
+
 
 
 if __name__ == '__main__':

@@ -146,10 +146,10 @@ class Model:
         self.sites = sites.copy()
         self.sites['sim_dates'] = [self.grid[to_grid(coord)]['arrival_time']
                                    for coord in coords]
-        if np.sum(self.sites['sim_dates'] == 0) / len(self.sites) > 0.25:
-            self.score = np.inf
-        else:
-            self.score = np.sqrt(np.sum((self.sites['bp'] - self.sites['sim_dates'])**2) / len(self.sites))
+        #if np.sum(self.sites['sim_dates'] == 0) / len(self.sites) > 0.25:
+        #    self.score = np.inf
+        #else:
+        self.score = np.sqrt(np.sum((self.sites['bp'] - self.sites['sim_dates'])**2) / len(self.sites))
 
     def check_env(self, cell):
         if not self.grid[cell]['vegetation']:
@@ -168,7 +168,7 @@ class Model:
         num_iter = (num_iter or self.start_date - 500) // STEP
         self.slices = []
         intervals = num_iter // 5
-        for i in tqdm(range(num_iter)):
+        for i in range(num_iter):
             self.update()
             for cell in self.settled_cells.copy():
                 self.grow_population(cell)

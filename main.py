@@ -1,35 +1,52 @@
+import numpy as np
 import pandas as pd
+
+from itertools import product
+from tqdm import tqdm
 
 from model import *
 
 
-SITES = pd.read_csv('sites/tupi_filtered.csv')
+SITES = pd.read_csv('sites/tupi_filtered_100.csv')
 
 
 def main():
+    ORIGIN = (-61.96, -10.96)
     """
-    df = pd.DataFrame(columns=['r', 'eK', 'forest', 'score'])
-    for r in np.arange(0.02, 0.05, 0.01):
-        for e_K in np.arange(0.3, 0.5, 0.1):
-            for forest in [True, False]:
-                m = Model(5000, (-61.96, -10.96), r, e_K, forest)
-                m.run()
-                m.get_score(SITES)
-                df = df.append({'r': r, 'eK': e_K, 'forest': forest, 'score': m.score},
-                                ignore_index=True)
+    r_vals = np.arange(0.02, 0.045, 0.005)
+    e_vals = np.arange(0.2, 0.45, 0.05)
+    param_list = list(product(r_vals, e_vals))
+    df = pd.DataFrame(columns=['r', 'eK', 'model', 'score'])
+    for i in tqdm(range(len(param_list))):
+        param = param_list[i]
+        m1 = Model(5000, ORIGIN, param[0], param[1], False)
+        m1.run()
+        m1.get_score(SITES)
+        df = df.append({'r': param[0], 'eK': param[1], 'model': 'null', 'score': m1.score}, ignore_index=True)
+
+        m2 = Model(5000, ORIGIN, param[0], param[1], True)
+        m2.run()
+        m2.get_score(SITES)
+        df = df.append({'r': param[0], 'eK': param[1], 'model': 'forest', 'score': m2.score}, ignore_index=True)
+    df = df.sort_values('score')
     df.to_csv('sim_scores.csv')
     """
-    null_model = Model(5000, (-61.96, -10.96), 0.025, 0.3, False)
-    null_model.run()
-    null_model.get_score(SITES)
-    print(null_model.score)
-    null_model.write('res/null_model.asc')
 
-    forest_model = Model(5000, (-61.96, -10.96), 0.025, 0.3, True)
-    forest_model.run()
-    forest_model.get_score(SITES)
-    print(forest_model.score)
-    forest_model.write('res/forest_model.asc')
+    m1 = Model(5000, ORIGIN, 0.025, 0.2, False)
+    m1.run()
+    m1.get_score(SITES)
+    m1.write('res/null_model.asc')
+    m1.sites['model'] = 'null'
+
+    m2 = Model(5000, ORIGIN, 0.025, 0.2, True)
+    m2.run()
+    m2.get_score(SITES)
+    m2.write('res/forest_model.asc')
+    m2.sites['model'] = 'forest'
+
+    df_sim_dates = pd.concat([m1.sites, m2.sites])
+    df_sim_dates.to_csv('img/sim_dates.csv')
+
 
 if __name__ == '__main__':
     main()

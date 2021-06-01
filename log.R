@@ -3,11 +3,14 @@ library(rgdal)
 
 source("utils.R")
 
+#scores <- testModels()
+#write.csv(scores, "dispersal_scores.csv")
+
 coast <- readOGR("shp/south_america.shp")
 
 biomes <- raster("layers/biomes.asc")
 proj4string(biomes) <- wgs
-speed <- frontSpeed(0.025, 50, 30)
+speed <- frontSpeed(0.02, 40, 30)
 origin <- c(-61.9574, -10.9557)
 
 cost.null <- biomes
@@ -15,7 +18,7 @@ cost.null[values(cost.null) > 1] <- 1
 iso.null <- simulateDispersal(cost.null, origin, 5000, speed)
 
 cost.forest <- biomes
-cost.forest[values(cost.forest) > 1] <- 4
+cost.forest[values(cost.forest) > 1] <- 2
 iso.forest <- simulateDispersal(cost.forest, origin, 5000, speed)
 
 nm <- raster("res/null_model.asc")
@@ -71,11 +74,11 @@ dev.print(jpeg, "slices.jpg", width=2000, height=1500, res=300)
 dev.off()
 
 # SCATTERPLOT
-real_dates <- read.csv("sites/tupi_filtered.csv")
+real_dates <- read.csv("sites/tupi_filtered_100.csv")
 sim_dates <- read.csv("img/sim_dates.csv")
 
-sim_dates_null <- sim_dates[sim_dates$forest == " null" & sim_dates$sim_dates > 0,]
-sim_dates_forest <- sim_dates[sim_dates$forest == "moist" & sim_dates$sim_dates > 0,]
+sim_dates_null <- sim_dates[sim_dates$model == "null" & sim_dates$sim_dates > 0,]
+sim_dates_forest <- sim_dates[sim_dates$model == "forest" & sim_dates$sim_dates > 0,]
 
 par(mfrow=c(1, 2))
 plot(real_dates$dist, real_dates$bp, pch=21, bg="white", xlab="distance from origin (km)", ylab="age (cal BP)", main="a")

@@ -45,7 +45,7 @@ getScore <- function(filename, num_iter=100) {
     colnames(res) <- c("model", "null", "moist")
     for (i in 1:max(sites$id)) {
         simDates <- sites[sites$id == i,]
-        for (j in c("null", "moist")) {
+        for (j in c("null", "forest")) {
             veg_model <- simDates[simDates$forest %like% j,]
             cat("\nbootstrapping dates...\n")
             pb <- txtProgressBar(min = 0, max = num_iter, style = 3)
@@ -132,15 +132,15 @@ frontSpeed <- function(a, delta, T) {
 testModels <- function() {
     bestParams <- c()
     bestScore <- Inf
-    sites <- read.csv("sites/tupi_filtered.csv")
+    sites <- read.csv("sites/tupi_filtered_100.csv")
     biomes <- raster("layers/biomes.asc")
     proj4string(biomes) <- CRS("+init=epsg:4326")
     coordinates(sites) <- ~Xadj+Yadj
     i <- 1
     params <- list()
     for (a in seq(0.02,0.04,0.005)) {
-        for (delta in seq(40,60,10)) {
-            for (cost in 1:5) {
+        for (delta in seq(40,60,5)) {
+            for (cost in 1:10) {
                 params[[i]] <- c(a, delta, cost)
                 i <- i + 1
             }
