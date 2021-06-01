@@ -43,7 +43,7 @@ plt <- levelplot(stack(nm, fm), at=500*1:10, col.regions=viridis(9),
           colorkey=list(height=0.8, width=1)) + layer(sp.polygons(coast))
 plot(plt)
 
-dev.print(jpeg, "sim.jpg", width=1200, height=900, res=300)
+dev.print(jpeg, "sim.jpg", width=2000, height=1500, res=300)
 dev.off()
 
 # TIME SLICE FIGURE
