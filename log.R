@@ -1,10 +1,11 @@
+library(grid)
 library(rasterVis)
 library(rgdal)
 
 source("utils.R")
 
-scores <- testModels()
-write.csv(scores, "dispersal_scores.csv")
+#scores <- testModels()
+#write.csv(scores, "dispersal_scores.csv")
 
 coast <- readOGR("shp/south_america.shp")
 
@@ -30,23 +31,28 @@ proj4string(fm) <- albers
 nm <- projectRaster(nm, iso.null)
 fm <- projectRaster(fm, iso.null)
 
-# ISOCHRONES FIGURE
+# ISOCHRONES FIGURE (DISPERSAL)
 plt <- levelplot(stack(iso.null, iso.forest), at=500*1:10, col.regions=viridis(9),
-          names.attr=c("a", "b"), scales=list(x=list(draw=FALSE),
-          y=list(draw=F)), xlab="", ylab="",
-          colorkey=list(height=0.8, width=1)) + layer(sp.polygons(coast))
+          names.attr=c("a", "b"),
+          #scales=list(x=list(draw=FALSE), y=list(draw=F)),
+          scales=list(alternating=3),
+          xlab="", ylab="",
+          colorkey=list(height=0.7, width=1)) + layer(sp.polygons(coast))
 plot(plt)
 
-dev.print(jpeg, "disperse.jpg", width=2000, height=1500, res=300)
+dev.print(jpeg, "disperse.jpg", width=1800, height=1200, res=300)
 dev.off()
 
+# ISOCHRONES FIGURE (SIM)
 plt <- levelplot(stack(nm, fm), at=500*1:10, col.regions=viridis(9),
-          names.attr=c("a", "b"), scales=list(x=list(draw=FALSE),
-          y=list(draw=F)), xlab="", ylab="",
-          colorkey=list(height=0.8, width=1)) + layer(sp.polygons(coast))
+          names.attr=c("a", "b"),
+          #scales=list(x=list(draw=FALSE), y=list(draw=F)),
+          scales=list(alternating=3),
+          xlab="", ylab="",
+          colorkey=list(height=0.7, width=1)) + layer(sp.polygons(coast))
 plot(plt)
 
-dev.print(jpeg, "sim.jpg", width=2000, height=1500, res=300)
+dev.print(jpeg, "sim.jpg", width=1800, height=1200, res=300)
 dev.off()
 
 # TIME SLICE FIGURE
@@ -65,12 +71,14 @@ for (i in 1:6) {
 
 plt <- levelplot(stack(lst), layout=c(6,2), col.regions = gray(seq(1,0,-1)),
                  names.attr=c(paste(as.character(rep(sq, 2)), "BP")),
-                 scales=list(x=list(draw=FALSE), y=list(draw=F)), xlab="", ylab="",
+                 #scales=list(x=list(draw=FALSE), y=list(draw=F)),
+                 scales=list(alternating=3),
+                 xlab="", ylab="",
                  colorkey=FALSE) +
        layer(sp.polygons(coast))
 plot(plt)
 
-dev.print(jpeg, "slices.jpg", width=2000, height=1500, res=300)
+dev.print(jpeg, "slices.jpg", width=2800, height=1600, res=300)
 dev.off()
 
 # SCATTERPLOT
