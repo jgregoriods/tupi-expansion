@@ -2,6 +2,11 @@ library(raster)
 library(viridisLite)
 
 res <- raster("rasters/S1biomes_0k.asc")
+proj4string(res) <- CRS("+init=epsg:4326")
+r2 <- raster(extent(res))
+proj4string(r2) <- CRS("+init=epsg:4326")
+res(r2) <- 0.25
+res <- projectRaster()
 res[!is.na(values(res))] <- -1
 for (i in seq(6000, 0, -1000)) {
     a <- raster(paste("rasters/S", (i / 1000) + 1, "biomes_", i / 1000, "k.asc", sep=""))

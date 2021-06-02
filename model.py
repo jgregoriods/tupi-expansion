@@ -33,6 +33,7 @@ def to_grid(cell):
     x, y = cell
     x_grid = (albers(x, y)[0] - XMIN) // CELL_SIZE
     # there is an offset of about 1 degree in the latitude when converting
+    # with pyproj
     y_grid = (YMAX - albers(x, y+1)[1]) // CELL_SIZE
     return x_grid, y_grid
 
