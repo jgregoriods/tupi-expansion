@@ -149,7 +149,8 @@ class Model:
         #if np.sum(self.sites['sim_dates'] == 0) / len(self.sites) > 0.25:
         #    self.score = np.inf
         #else:
-        self.score = np.sqrt(np.sum((self.sites['bp'] - self.sites['sim_dates'])**2) / len(self.sites))
+        selected_sites = self.sites[self.sites['sim_dates'] > 0]
+        self.score = np.sqrt(np.sum((selected_sites['bp'] - selected_sites['sim_dates'])**2) / len(selected_sites))
 
     def check_env(self, cell):
         if not self.grid[cell]['vegetation']:
@@ -175,7 +176,7 @@ class Model:
                 self.disperse_population(cell)
                 self.check_env(cell)
             self.date -= STEP
-            if not i % intervals:
+            if not i % intervals or self.date <= 500:
                 p = np.zeros((NROWS, NCOLS))
                 for cell in self.grid:
                     p[cell[1]][cell[0]] = self.grid[cell]['population'] > 0

@@ -38,7 +38,7 @@ bootstrapDates <- function(calDates) {
 
 getScore <- function(filename, num_iter=100) {
     sites <- read.csv(filename)
-    tupi <- read.csv("sites/tupi_filtered.csv")
+    tupi <- read.csv("sites/tupi_filtered_100b.csv")
     cal <- calibrate(tupi$C14Age, tupi$C14SD, calCurves=tupi$calCurves,
                      resOffsets=tupi$resOffsets, resErrors=tupi$resErrors)
     res <- matrix(ncol=3, nrow=max(sites$id))
@@ -103,8 +103,9 @@ simulateDispersal <- function(costRaster, origin, date, speed) {
 sampleDates <- function(isochrones, sites, num_iter=100, verbose=TRUE) {
     sites$simBP <- extract(isochrones, sites)
     if ((sum(is.na(sites$simBP)) / nrow(sites)) > 0.1) {return(Inf)}
-    sites$simBP[is.na(sites$simBP)] <- 0
-    cal <- calibrate(sites$C14Age, sites$C14SD, calCurves=sites$calCurves, resOffsets=sites$resOffsets, resErrors=sites$resErrors, verbose=FALSE)
+    #sites$simBP[is.na(sites$simBP)] <- 0
+    sites <- sites[!is.na(sites$simBP),]
+    #cal <- calibrate(sites$C14Age, sites$C14SD, calCurves=sites$calCurves, resOffsets=sites$resOffsets, resErrors=sites$resErrors, verbose=FALSE)
     errors <- vector(mode="numeric", length=num_iter)
     if (verbose) {
         pb <- txtProgressBar(min = 0, max = num_iter, style = 3)
@@ -132,7 +133,7 @@ frontSpeed <- function(a, delta, T) {
 testModels <- function() {
     bestParams <- c()
     bestScore <- Inf
-    sites <- read.csv("sites/tupi_filtered_100.csv")
+    sites <- read.csv("sites/tupi_filtered_100b.csv")
     biomes <- raster("layers/biomes.asc")
     proj4string(biomes) <- CRS("+init=epsg:4326")
     coordinates(sites) <- ~Xadj+Yadj
@@ -158,7 +159,7 @@ testModels <- function() {
         costSurface <- biomes
         costSurface[values(costSurface) > 1] <- cost
         speed <- frontSpeed(a, delta, 30)
-        isochrones <- simulateDispersal(costSurface, c(-61.9574, -10.9557), 5000, speed)
+        isochrones <- simulateDispersal(costSurface, c(-61.96, -10.96), 5000, speed)
         score <- sampleDates(isochrones, sites, verbose=FALSE)
         gc()
         return(c(a, delta, cost, score))
@@ -177,6 +178,7 @@ plotSim <- function(iso, title) {
 
 if(FALSE){
 tupi <- read.csv("sites/tupi_all.csv")
+tupi <- tupi[tupi$Exclude == "FALSE",]
 coordinates(tupi) <- ~Longitude+Latitude
 proj4string(tupi) <- CRS("+init=epsg:4326")
 
@@ -184,9 +186,9 @@ cal.dates <- calibrate(tupi$C14Age, tupi$C14SD, calCurves=tupi$calCurves,
                        resOffsets=tupi$resOffsets, resErrors=tupi$resErrors)
 tupi$bp <- medCal(cal.dates)
 
-tupi.f <- filterDates(tupi, 0)
+tupi.f <- filterDates(tupi, 100)
 tupi.f$dist <- getDist(tupi.f, tupi.f[1,])
 #tupi.df <- data.frame(x=tupi.f$Longitude, y=tupi.f$Latitude, bp=tupi.f$bp, dist=tupi.f$dist)
 tupi.df <- as.data.frame(tupi.f)[c("Longitude", "Latitude", "dist", "bp", "C14Age", "C14SD", "calCurves", "resOffsets", "resErrors")]
-write.csv(tupi.df, "sites/tupi_filtered.csv")
+write.csv(tupi.df, "sites/tupi_filtered_100b.csv")
 }

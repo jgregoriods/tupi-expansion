@@ -3,22 +3,22 @@ library(rgdal)
 
 source("utils.R")
 
-#scores <- testModels()
-#write.csv(scores, "dispersal_scores.csv")
+scores <- testModels()
+write.csv(scores, "dispersal_scores.csv")
 
 coast <- readOGR("shp/south_america.shp")
 
 biomes <- raster("layers/biomes.asc")
 proj4string(biomes) <- wgs
-speed <- frontSpeed(0.02, 40, 30)
-origin <- c(-61.9574, -10.9557)
+speed <- frontSpeed(0.025, 50, 30)
+origin <- c(-61.96, -10.96)
 
 cost.null <- biomes
 cost.null[values(cost.null) > 1] <- 1
 iso.null <- simulateDispersal(cost.null, origin, 5000, speed)
 
 cost.forest <- biomes
-cost.forest[values(cost.forest) > 1] <- 2
+cost.forest[values(cost.forest) > 1] <- 4
 iso.forest <- simulateDispersal(cost.forest, origin, 5000, speed)
 
 nm <- raster("res/null_model.asc")
@@ -50,9 +50,9 @@ dev.print(jpeg, "sim.jpg", width=2000, height=1500, res=300)
 dev.off()
 
 # TIME SLICE FIGURE
-sq <- seq(4970, 1370, -900)
+sq <- c(seq(4970, 1370, -900), 500)
 lst <- list()
-for (i in 1:5) {
+for (i in 1:6) {
     r1 <- raster(paste('res/null_model_',sq[i],'.asc',sep=''))
     proj4string(r1) <- albers
     r1 <- projectRaster(r1, iso.null, method="ngb")
@@ -60,10 +60,10 @@ for (i in 1:5) {
     r2 <- raster(paste('res/forest_model_',sq[i],'.asc',sep=''))
     proj4string(r2) <- albers
     r2 <- projectRaster(r2, iso.null, method="ngb")
-    lst[[i+5]] <- r2
+    lst[[i+6]] <- r2
 }
 
-plt <- levelplot(stack(lst), layout=c(5,2), col.regions = gray(seq(1,0,-1)),
+plt <- levelplot(stack(lst), layout=c(6,2), col.regions = gray(seq(1,0,-1)),
                  names.attr=c(paste(as.character(rep(sq, 2)), "BP")),
                  scales=list(x=list(draw=FALSE), y=list(draw=F)), xlab="", ylab="",
                  colorkey=FALSE) +
@@ -74,7 +74,7 @@ dev.print(jpeg, "slices.jpg", width=2000, height=1500, res=300)
 dev.off()
 
 # SCATTERPLOT
-real_dates <- read.csv("sites/tupi_filtered_100.csv")
+real_dates <- read.csv("sites/tupi_filtered_100b.csv")
 sim_dates <- read.csv("img/sim_dates.csv")
 
 sim_dates_null <- sim_dates[sim_dates$model == "null" & sim_dates$sim_dates > 0,]
