@@ -33,23 +33,23 @@ def main():
     for i in res:
         df = df.append(i, ignore_index=True)
     df = df.sort_values('score')
-    df.to_csv('sim_scores.csv')
+    df.to_csv('results/sim_scores.csv')
 
 
     m1 = Model(5000, ORIGIN, 0.025, 0.3, False)
     m1.run()
     m1.get_score(SITES)
-    m1.write('res/null_model.asc')
+    m1.write('results/rasters/null_model.asc')
     m1.sites['model'] = 'null'
 
     m2 = Model(5000, ORIGIN, 0.025, 0.3, True)
     m2.run()
     m2.get_score(SITES)
-    m2.write('res/forest_model.asc')
+    m2.write('results/rasters/forest_model.asc')
     m2.sites['model'] = 'forest'
 
     df_sim_dates = pd.concat([m1.sites, m2.sites])
-    df_sim_dates.to_csv('img/sim_dates.csv')
+    df_sim_dates.to_csv('results/sim_dates.csv')
 
 
 if __name__ == '__main__':
