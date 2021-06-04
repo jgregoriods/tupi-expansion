@@ -1,6 +1,7 @@
 library(grid)
 library(rasterVis)
 library(rgdal)
+library(viridisLite)
 
 source("utils.R")
 
@@ -16,11 +17,11 @@ origin <- c(-61.96, -10.96)
 
 cost.null <- biomes
 cost.null[values(cost.null) > 1] <- 1
-iso.null <- simulateDispersal(cost.null, origin, 5000, speed)
+iso.null <- disperse(cost.null, origin, 5000, speed)
 
 cost.forest <- biomes
 cost.forest[values(cost.forest) > 1] <- 4
-iso.forest <- simulateDispersal(cost.forest, origin, 5000, speed)
+iso.forest <- disperse(cost.forest, origin, 5000, speed)
 
 nm <- raster("results/rasters/null_model.asc")
 proj4string(nm) <- albers
@@ -46,7 +47,6 @@ dev.off()
 # ISOCHRONES FIGURE (SIM)
 plt <- levelplot(stack(nm, fm), at=500*1:10, col.regions=viridis(9),
           names.attr=c("a", "b"),
-          #scales=list(x=list(draw=FALSE), y=list(draw=F)),
           scales=list(alternating=3),
           xlab="", ylab="",
           colorkey=list(height=0.7, width=1)) + layer(sp.polygons(coast))
@@ -71,7 +71,6 @@ for (i in 1:6) {
 
 plt <- levelplot(stack(lst), layout=c(6,2), col.regions = gray(seq(1,0,-1)),
                  names.attr=c(paste(as.character(rep(sq, 2)), "BP")),
-                 #scales=list(x=list(draw=FALSE), y=list(draw=F)),
                  scales=list(alternating=3),
                  xlab="", ylab="",
                  colorkey=FALSE) +
