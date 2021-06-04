@@ -147,9 +147,6 @@ class Model:
         self.sites = sites.copy()
         self.sites['sim_dates'] = [self.grid[to_grid(coord)]['arrival_time']
                                    for coord in coords]
-        #if np.sum(self.sites['sim_dates'] == 0) / len(self.sites) > 0.25:
-        #    self.score = np.inf
-        #else:
         selected_sites = self.sites[self.sites['sim_dates'] > 0]
         self.score = np.sqrt(np.sum((selected_sites['bp'] - selected_sites['sim_dates'])**2) / len(selected_sites))
 

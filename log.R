@@ -82,7 +82,7 @@ dev.print(jpeg, "img/slices.jpg", width=2800, height=1600, res=300)
 dev.off()
 
 # SCATTERPLOT
-real_dates <- read.csv("sites/tupi_filtered_100b.csv")
+real_dates <- read.csv("sites/tupi_dates.csv")
 sim_dates <- read.csv("results/sim_dates.csv")
 
 sim_dates_null <- sim_dates[sim_dates$model == "null" & sim_dates$sim_dates > 0,]
