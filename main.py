@@ -3,12 +3,11 @@ import pandas as pd
 import multiprocessing as mp
 
 from itertools import product
-from tqdm import tqdm
 
 from model import *
 
 
-SITES = pd.read_csv('sites/tupi_filtered_100b.csv')
+SITES = pd.read_csv('sites/tupi_dates.csv')
 ORIGIN = (-61.96, -10.96)
 
 
@@ -28,6 +27,7 @@ def main():
     df = pd.DataFrame(columns=['r', 'eK', 'model', 'score'])
     n_cores = mp.cpu_count() - 1
     pool = mp.Pool(n_cores)
+    print(f'Running {len(param_list)} simulations. This may take a while ...')
     res = pool.map(test_model, param_list)
     pool.close()
     for i in res:

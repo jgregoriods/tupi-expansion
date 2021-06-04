@@ -11,16 +11,6 @@ wgs <- CRS("+init=epsg:4326")
 albers <- CRS("+proj=aea +lat_0=-32 +lon_0=-60 +lat_1=-5 +lat_2=-42
                +x_0=0 +y_0=0 +ellps=aust_SA +units=m +no_defs")
 
-bootstrapDates <- function(calDates) {
-    sampledCalBP <- numeric(length(calDates))
-	for (i in 1:length(calDates)) {
-        calBP <- sample(calDates[i]$grids[[1]]$calBP, size = 1,
-                        prob = calDates[i]$grids[[1]]$PrDens)
-        sampledCalBP[i] <- calBP
-    }
-    return(sampledCalBP)
-}
-
 simulateDispersal <- function(costRaster, origin, date, speed) {
     tr <- transition(costRaster, function(x) 1 / mean(x), 16)
     tr <- geoCorrection(tr)
@@ -30,7 +20,7 @@ simulateDispersal <- function(costRaster, origin, date, speed) {
     return(isochrones)
 }
 
-sampleDates <- function(isochrones, sites, num_iter=100, verbose=TRUE) {
+getScore <- function(isochrones, sites, num_iter=100, verbose=TRUE) {
     sites$simBP <- extract(isochrones, sites)
     if ((sum(is.na(sites$simBP)) / nrow(sites)) > 0.1) {return(Inf)}
     sites <- sites[!is.na(sites$simBP),]
@@ -59,7 +49,7 @@ frontSpeed <- function(a, delta, T) {
 testModels <- function() {
     bestParams <- c()
     bestScore <- Inf
-    sites <- read.csv("sites/tupi_filtered_100b.csv")
+    sites <- read.csv("sites/tupi_dates.csv")
     biomes <- raster("layers/biomes.asc")
     proj4string(biomes) <- CRS("+init=epsg:4326")
     coordinates(sites) <- ~Xadj+Yadj
@@ -77,7 +67,9 @@ testModels <- function() {
     cl <- makeCluster(ncores)
     clusterEvalQ(cl, library("gdistance"))
     clusterEvalQ(cl, library("rcarbon"))
-    clusterExport(cl, varlist=c("biomes", "sites", "frontSpeed", "simulateDispersal", "sampleDates", "bootstrapDates"), envir=environment())
+    clusterExport(cl, varlist=c("biomes", "sites", "frontSpeed",
+                                "simulateDispersal", "getScore"), envir=environment())
+    cat(paste("Running", length(params), "dispersal models. This may take a while ...\n"))
     res <- parLapply(cl, params, function(x) {
         a <- x[1]
         delta <- x[2]
@@ -86,7 +78,7 @@ testModels <- function() {
         costSurface[values(costSurface) > 1] <- cost
         speed <- frontSpeed(a, delta, 30)
         isochrones <- simulateDispersal(costSurface, c(-61.96, -10.96), 5000, speed)
-        score <- sampleDates(isochrones, sites, verbose=FALSE)
+        score <- getScore(isochrones, sites, verbose=FALSE)
         gc()
         return(c(a, delta, cost, score))
     })
