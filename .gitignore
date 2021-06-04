@@ -1,2 +1,6 @@
-python/snapshots
 rasters
+.DS_Store
+.idea
+__pycache__
+.Rhistory
+.vscode
