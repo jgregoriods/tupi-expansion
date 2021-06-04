@@ -5,11 +5,11 @@ library(viridisLite)
 
 source("utils.R")
 
-coast <- readOGR("shp/south_america.shp")
-scores <- testModels()
+coastline <- readOGR("shp/south_america.shp")
 biomes <- raster("layers/biomes.asc")
 proj4string(biomes) <- wgs
 
+scores <- testModels()
 write.csv(scores, "results/dispersal_scores.csv")
 
 speed <- frontSpeed(0.025, 50, 30)
@@ -33,21 +33,22 @@ simulation.null <- projectRaster(simulation.null, iso.null)
 simulation.forest <- projectRaster(simulation.forest, iso.null)
 
 # Figure 2
-plt <- levelplot(stack(iso.null, iso.forest), at=500*1:10, col.regions=viridis(9),
-                 names.attr=c("a", "b"), scales=list(alternating=3),
-                 xlab="", ylab="", colorkey=list(height=0.7, width=1)) +
-       layer(sp.polygons(coast))
+plt <- levelplot(stack(iso.null, iso.forest), at=500*1:10,
+                 col.regions=viridis(9), names.attr=c("a", "b"),
+                 scales=list(alternating=3), xlab="", ylab="",
+                 colorkey=list(height=0.7, width=1)) +
+       layer(sp.polygons(coastline))
 plot(plt)
 
 dev.print(jpeg, "img/disperse.jpg", width=1800, height=1200, res=300)
 dev.off()
 
 # Figure 3
-plt <- levelplot(stack(nm, fm), at=500*1:10, col.regions=viridis(9),
-          names.attr=c("a", "b"),
-          scales=list(alternating=3),
-          xlab="", ylab="",
-          colorkey=list(height=0.7, width=1)) + layer(sp.polygons(coast))
+plt <- levelplot(stack(simulation.null, simulation.forest), at=500*1:10,
+                 col.regions=viridis(9), names.attr=c("a", "b"),
+                 scales=list(alternating=3), xlab="", ylab="",
+                 colorkey=list(height=0.7, width=1)) +
+       layer(sp.polygons(coastline))
 plot(plt)
 
 dev.print(jpeg, "img/sim.jpg", width=1800, height=1200, res=300)
@@ -72,23 +73,23 @@ dev.print(jpeg, "img/scatterplot.jpg", width=3000, height=1500, res=300)
 dev.off()
 
 # Figure 5
-sq <- c(seq(4970, 1370, -900), 500)
-lst <- list()
+years <- c(seq(4970, 1370, -900), 500)
+timeSlices <- list()
 for (i in 1:6) {
-    r1 <- raster(paste('results/rasters/null_model_',sq[i],'.asc',sep=''))
-    proj4string(r1) <- albers
-    r1 <- projectRaster(r1, iso.null, method="ngb")
-    lst[[i]] <- r1
-    r2 <- raster(paste('results/rasters/forest_model_',sq[i],'.asc',sep=''))
-    proj4string(r2) <- albers
-    r2 <- projectRaster(r2, iso.null, method="ngb")
-    lst[[i+6]] <- r2
+    r.null <- raster(paste('results/rasters/null_model_', years[i], '.asc', sep=''))
+    proj4string(r.null) <- albers
+    r.null <- projectRaster(r.null, iso.null, method="ngb")
+    timeSlices[[i]] <- r.null
+    r.forest <- raster(paste('results/rasters/forest_model_', years[i], '.asc', sep=''))
+    proj4string(r.forest) <- albers
+    r.forest <- projectRaster(r.forest, iso.null, method="ngb")
+    timeSlices[[i+6]] <- r.forest
 }
 
-plt <- levelplot(stack(lst), layout=c(6,2), col.regions = gray(seq(1,0,-1)),
-                 names.attr=c(paste(as.character(rep(sq, 2)), "BP")),
+plt <- levelplot(stack(timeSlices), layout=c(6,2), col.regions = gray(seq(1,0,-1)),
+                 names.attr=c(paste(as.character(rep(years, 2)), "BP")),
                  scales=list(alternating=3), xlab="", ylab="", colorkey=FALSE) +
-       layer(sp.polygons(coast))
+       layer(sp.polygons(coastline))
 plot(plt)
 
 dev.print(jpeg, "img/slices.jpg", width=2800, height=1600, res=300)
