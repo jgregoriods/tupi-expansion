@@ -61,15 +61,32 @@ sim_dates <- read.csv("results/sim_dates.csv")
 sim_dates_null <- sim_dates[sim_dates$model == "null" & sim_dates$sim_dates > 0,]
 sim_dates_forest <- sim_dates[sim_dates$model == "forest" & sim_dates$sim_dates > 0,]
 
-par(mfrow=c(1, 2))
-plot(real_dates$dist, real_dates$bp, pch=21, bg="white",
-     xlab="distance from origin (km)", ylab="age (cal BP)", main="a")
-points(sim_dates_null$dist, sim_dates_null$sim_dates, pch=19)
-plot(real_dates$dist, real_dates$bp, pch=21, bg="white",
-     xlab="distance from origin (km)", ylab="age (cal BP)", main="b")
-points(sim_dates_forest$dist, sim_dates_forest$sim_dates, pch=19)
+coordinates(real_dates) <- ~Longitude+Latitude
+proj4string(real_dates) <- wgs
 
-dev.print(jpeg, "img/scatterplot.jpg", width=3000, height=1500, res=300)
+dates.null <- extract(iso.null, real_dates)
+dates.forest <- extract(iso.forest, real_dates)
+
+par(mfrow=c(1, 2))
+plot(real_dates$dist, real_dates$bp, pch=1,
+     xlab="distance from origin (km)", ylab="age (cal BP)", main="a")
+points(real_dates$dist, dates.null, pch=3, col="red")
+plot(real_dates$dist, real_dates$bp, pch=1,
+     xlab="distance from origin (km)", ylab="age (cal BP)", main="b")
+points(real_dates$dist, dates.forest, pch=3, col="red")
+
+dev.print(jpeg, "img/scatterplot1.jpg", width=3000, height=1500, res=300)
+dev.off()
+
+par(mfrow=c(1, 2))
+plot(real_dates$dist, real_dates$bp, pch=1,
+     xlab="distance from origin (km)", ylab="age (cal BP)", main="a")
+points(sim_dates_null$dist, sim_dates_null$sim_dates, pch=3, col="red")
+plot(real_dates$dist, real_dates$bp, pch=1,
+     xlab="distance from origin (km)", ylab="age (cal BP)", main="b")
+points(sim_dates_forest$dist, sim_dates_forest$sim_dates, pch=3, col="red")
+
+dev.print(jpeg, "img/scatterplot2.jpg", width=3000, height=1500, res=300)
 dev.off()
 
 # Figure 5
