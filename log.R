@@ -73,14 +73,14 @@ plot(real_dates$dist, real_dates$bp, pch=19, col="black",
 points(real_dates$dist, dates.null, pch=19, col=4)
 legend("topright", inset=.02, legend=c("14C dates", "simulated"), col=c("black", 4),
        pch=19, y.intersp=1.5, box.lty=0)
-mtext("RMSE=2375", side=3)
+mtext("RMSE=2375", side=3, adj=0)
 
 plot(real_dates$dist, real_dates$bp, pch=19, col="black",
      xlab="distance from origin (km)", ylab="age (cal BP)", main="b")
 points(real_dates$dist, dates.forest, pch=19, col=4)
 legend("topright", inset=.02, legend=c("14C dates", "simulated"), col=c("black", 4),
        pch=19, y.intersp=1.5, box.lty=0)
-mtext("RMSE=1687", side=3)
+mtext("RMSE=1687", side=3, adj=0)
 
 dev.print(jpeg, "img/scatterplot1.jpg", width=3000, height=1500, res=300)
 dev.off()
@@ -91,14 +91,14 @@ plot(real_dates$dist, real_dates$bp, pch=19, col="black",
 points(sim_dates_null$dist, sim_dates_null$sim_dates, pch=19, col=4)
 legend("topright", inset=.02, legend=c("14C dates", "simulated"), col=c("black", 4),
        pch=19, y.intersp=1.5, box.lty=0)
-mtext("RMSE=2440", side=3)
+mtext("RMSE=2440", side=3, adj=0)
 
 plot(real_dates$dist, real_dates$bp, pch=19, col="black",
      xlab="distance from origin (km)", ylab="age (cal BP)", main="b")
 points(sim_dates_forest$dist, sim_dates_forest$sim_dates, pch=19, col=4)
 legend("topright", inset=.02, legend=c("14C dates", "simulated"), col=c("black", 4),
        pch=19, y.intersp=1.5, box.lty=0)
-mtext("RMSE=1783", side=3)
+mtext("RMSE=1783", side=3, adj=0)
 
 dev.print(jpeg, "img/scatterplot2.jpg", width=3000, height=1500, res=300)
 dev.off()
