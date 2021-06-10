@@ -66,16 +66,6 @@ testModels <- function() {
     costValues <- 1:10
     params.df <- expand.grid(growthRates, displacements, costValues)
     params <- split(params.df, seq(nrow(params.df)))
-    #i <- 1
-    #params <- list()
-    #for (a in seq(0.02,0.04,0.005)) {
-    #    for (delta in seq(40,60,5)) {
-    #        for (cost in 1:10) {
-    #            params[[i]] <- c(a, delta, cost)
-    #            i <- i + 1
-    #        }
-    #    }
-    #}
     ncores <- detectCores() - 1
     cl <- makeCluster(ncores)
     clusterEvalQ(cl, library("gdistance"))
