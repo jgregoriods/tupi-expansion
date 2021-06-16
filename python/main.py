@@ -31,7 +31,7 @@ def main():
     df = pd.DataFrame(columns=['growth', 'emigration', 'model', 'score'])
     n_cores = mp.cpu_count() - 1
     pool = mp.Pool(n_cores)
-    print(f'Running {len(param_list)} models. This may take a while ...')
+    print(f'\nRunning {len(param_list)} models. This may take a while ...')
     scores = pool.map(test_model, param_list)
     pool.close()
     for i in scores:

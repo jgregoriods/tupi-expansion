@@ -72,7 +72,7 @@ testModels <- function() {
     clusterEvalQ(cl, library("rcarbon"))
     clusterExport(cl, varlist=c("biomes", "sites", "frontSpeed",
                                 "disperse", "getScore"), envir=environment())
-    cat(paste("Running", length(params), "models. This may take a while ...\n"))
+    cat(paste("\nRunning", length(params), "models. This may take a while ...\n"))
     res <- parLapply(cl, params, function(x) {
         growth <- x[1,1]
         displacement <- x[1,2]

@@ -1,9 +1,5 @@
 import numpy as np
 import pyproj
-import statsmodels.api as sm
-
-from scipy import optimize
-from tqdm import tqdm
 
 
 header_info = np.loadtxt('layers/ele.asc', dtype='U', max_rows=6)
