@@ -35,26 +35,28 @@ simulation.forest <- projectRaster(simulation.forest, iso.null)
 # Figure 2
 plt <- levelplot(stack(iso.null, iso.forest), at=500*1:10,
                  col.regions=viridis(9), names.attr=c("a", "b"),
-                 scales=list(alternating=3), xlab="", ylab="",
+                 scales=list(alternating=3), xlab="Longitude", ylab="Latitude",
                  colorkey=list(height=0.7, width=1)) +
        layer(sp.polygons(coastline))
 plot(plt)
+grid.text("cal BP", 0.92, 0.9)
 
-dev.print(jpeg, "../img/Figure2.jpg", width=1800, height=1200, res=300)
-dev.off()
-
-# Figure 3
-plt <- levelplot(stack(simulation.null, simulation.forest), at=500*1:10,
-                 col.regions=viridis(9), names.attr=c("a", "b"),
-                 scales=list(alternating=3), xlab="", ylab="",
-                 colorkey=list(height=0.7, width=1)) +
-       layer(sp.polygons(coastline))
-plot(plt)
-
-dev.print(jpeg, "../img/Figure3.jpg", width=1800, height=1200, res=300)
+dev.print(jpeg, "../img/Figure2.jpg", width=1900, height=1400, res=300)
 dev.off()
 
 # Figure 4
+plt <- levelplot(stack(simulation.null, simulation.forest), at=500*1:10,
+                 col.regions=viridis(9), names.attr=c("a", "b"),
+                 scales=list(alternating=3), xlab="Longitude", ylab="Latitude",
+                 colorkey=list(height=0.7, width=1)) +
+       layer(sp.polygons(coastline))
+plot(plt)
+grid.text("cal BP", 0.92, 0.9)
+
+dev.print(jpeg, "../img/Figure4.jpg", width=1900, height=1400, res=300)
+dev.off()
+
+# Figure 3
 real_dates <- read.csv("../sites/tupi_dates.csv")
 sim_dates <- read.csv("../results/sim_dates.csv")
 
@@ -71,18 +73,18 @@ par(mfrow=c(1, 2))
 plot(real_dates$dist, real_dates$bp, pch=19, col="black",
      xlab="distance from origin (km)", ylab="age (cal BP)", main="a")
 points(real_dates$dist, dates.null, pch=19, col=4)
-legend("topright", inset=.02, legend=c("14C dates", "simulated"), col=c("black", 4),
+legend("topright", legend=c("14C dates", "simulated"), col=c("black", 4),
        pch=19, y.intersp=1.5, box.lty=0)
-mtext("RMSE=2450", side=3, adj=0)
+mtext("RMSE=2385", side=3, adj=0)
 
 plot(real_dates$dist, real_dates$bp, pch=19, col="black",
      xlab="distance from origin (km)", ylab="age (cal BP)", main="b")
 points(real_dates$dist, dates.forest, pch=19, col=4)
-legend("topright", inset=.02, legend=c("14C dates", "simulated"), col=c("black", 4),
+legend("topright", legend=c("14C dates", "simulated"), col=c("black", 4),
        pch=19, y.intersp=1.5, box.lty=0)
 mtext("RMSE=1702", side=3, adj=0)
 
-dev.print(jpeg, "../img/Figure4.jpg", width=3000, height=1500, res=300)
+dev.print(jpeg, "../img/Figure3.jpg", width=3000, height=1500, res=300)
 dev.off()
 
 # Figure 5
@@ -90,14 +92,14 @@ par(mfrow=c(1, 2))
 plot(real_dates$dist, real_dates$bp, pch=19, col="black",
      xlab="distance from origin (km)", ylab="age (cal BP)", main="a")
 points(sim_dates_null$dist, sim_dates_null$sim_dates, pch=19, col=4)
-legend("topright", inset=.02, legend=c("14C dates", "simulated"), col=c("black", 4),
+legend("topright", legend=c("14C dates", "simulated"), col=c("black", 4),
        pch=19, y.intersp=1.5, box.lty=0)
-mtext("RMSE=2440", side=3, adj=0)
+mtext("RMSE=2450", side=3, adj=0)
 
 plot(real_dates$dist, real_dates$bp, pch=19, col="black",
      xlab="distance from origin (km)", ylab="age (cal BP)", main="b")
 points(sim_dates_forest$dist, sim_dates_forest$sim_dates, pch=19, col=4)
-legend("topright", inset=.02, legend=c("14C dates", "simulated"), col=c("black", 4),
+legend("topright", legend=c("14C dates", "simulated"), col=c("black", 4),
        pch=19, y.intersp=1.5, box.lty=0)
 mtext("RMSE=1791", side=3, adj=0)
 
@@ -120,7 +122,7 @@ for (i in 1:6) {
 
 plt <- levelplot(stack(timeSlices), layout=c(6,2), col.regions = gray(seq(1,0,-1)),
                  names.attr=c(paste(as.character(rep(years, 2)), "BP")),
-                 scales=list(alternating=3), xlab="", ylab="", colorkey=FALSE) +
+                 scales=list(alternating=3, x=list(at=c(-70,-50))), xlab="Longitude", ylab="Latitude", colorkey=FALSE) +
        layer(sp.polygons(coastline))
 plot(plt)
 
